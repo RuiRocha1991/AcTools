@@ -10,18 +10,18 @@ Os AC Toyotomi com a app EWPE Smart usam o protocolo Gree. A integração nativa
 
 | Ficheiro | Onde vai no HA | Conteúdo |
 |---|---|---|
-| `configuration.yaml` | `/homeassistant/configuration.yaml` (= `/config`) | sensores template (15 min), `recorder` (800 dias) e `shell_command` para o CSV |
-| `automations.yaml` | acrescentar a `/homeassistant/automations.yaml` | automação que escreve uma linha no CSV a cada 15 min |
+| `configuration.yaml` | `/homeassistant/configuration.yaml` (= `/config`) | sensores template de temperatura e modo (15 min), `recorder` (800 dias) e `shell_command` para o CSV |
+| `automations.yaml` | acrescentar a `/homeassistant/automations.yaml` | automação que escreve 5 linhas (uma por unidade) no CSV a cada 15 min |
 
 ## Unidades
 
-| Divisão | Entidade `climate` | Sensor criado |
+| Divisão | Entidade `climate` | Sensores criados |
 |---|---|---|
-| Living Room | `climate.1ec942ca` | `sensor.ac_living_room_temperatura` |
-| Cozinha | `climate.c62db069` | `sensor.ac_cozinha_temperatura` |
-| Office | `climate.c63fd170` | `sensor.ac_office_temperatura` |
-| Suite Master | `climate.c640155f` | `sensor.ac_suite_master_temperatura` |
-| Kids Room | `climate.c64015c4` | `sensor.ac_kids_room_temperatura` |
+| Living Room | `climate.1ec942ca` | `sensor.ac_living_room_temperatura`, `sensor.ac_living_room_modo` |
+| Cozinha | `climate.c62db069` | `sensor.ac_cozinha_temperatura`, `sensor.ac_cozinha_modo` |
+| Office | `climate.c63fd170` | `sensor.ac_office_temperatura`, `sensor.ac_office_modo` |
+| Suite Master | `climate.c640155f` | `sensor.ac_suite_master_temperatura`, `sensor.ac_suite_master_modo` |
+| Kids Room | `climate.c64015c4` | `sensor.ac_kids_room_temperatura`, `sensor.ac_kids_room_modo` |
 
 Os IDs `climate.*` são específicos desta instalação. Noutra instalação, vê-os em
 *Ferramentas de programador → Estados* (filtro `climate.`).
@@ -37,20 +37,30 @@ Os IDs `climate.*` são específicos desta instalação. Noutra instalação, v�
 4. Acrescentar a automação de `automations.yaml` ao ficheiro do HA.
 5. *Ferramentas de programador → YAML → Verificar configuração* e depois **Reiniciar** o HA.
 6. Testar o CSV sem esperar 15 min: *Ferramentas de programador → Ações →*
-   `shell_command.append_temperaturas_csv`. Deve aparecer `/config/temperaturas.csv`.
+   `shell_command.append_temperaturas_csv`. Deve aparecer `/config/temperaturas.csv` com 5 linhas.
 
 ## Como funciona
 
 - Um *template* com `time_pattern` corre nos minutos 0/15/30/45: atualiza as 5
-  entidades (`homeassistant.update_entity`) e grava o valor em 5 sensores com
-  `state_class: measurement`.
+  entidades (`homeassistant.update_entity`) e grava, por unidade, um sensor de
+  **temperatura** (`state_class: measurement`) e um sensor de **modo**.
+- O **modo** é o estado da entidade `climate`: `off` (desligado), `cool`, `heat`,
+  `auto`, `dry` ou `fan_only`. Não há sensor separado de ligado/desligado:
+  ligado = modo diferente de `off`.
 - O atributo `amostra` (timestamp) força uma linha nova no histórico mesmo quando
-  a temperatura não muda, para não haver buracos na série.
-- O `recorder` guarda **só** estes 5 sensores durante 800 dias. `commit_interval: 60`
+  o valor não muda, para não haver buracos na série.
+- O `recorder` guarda **só** estes 10 sensores durante 800 dias. `commit_interval: 60`
   reduz escritas no cartão SD.
-- A automação corre aos 30 s de cada quarto de hora e acrescenta uma linha a
-  `/config/temperaturas.csv` (`data,living_room,cozinha,office,suite_master,kids_room`),
-  com o campo em branco quando o sensor está indisponível.
+- A automação corre aos 30 s de cada quarto de hora e acrescenta **uma linha por
+  unidade** a `/config/temperaturas.csv`:
+
+```
+data,unidade,temperatura,modo,ligado
+2026-09-29T16:45+0100,living_room,24,cool,1
+2026-09-29T16:45+0100,cozinha,27,off,0
+```
+
+  `ligado` é 1/0, e fica em branco (tal como a temperatura) se a unidade estiver indisponível.
 
 ## Obter os dados para estudo
 

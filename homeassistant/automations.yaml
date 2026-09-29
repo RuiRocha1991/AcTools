@@ -3,7 +3,7 @@
 # Se o ficheiro já tiver automações, junta este item à lista existente.
 - id: guardar_temperaturas_csv
   alias: Guardar temperaturas CSV
-  description: Acrescenta uma linha a /config/temperaturas.csv de 15 em 15 minutos
+  description: Acrescenta ao /config/temperaturas.csv uma linha por unidade de 15 em 15 minutos
   mode: single
   trigger:
     - platform: time_pattern

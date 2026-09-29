@@ -9,14 +9,28 @@ automation: !include automations.yaml
 script: !include scripts.yaml
 scene: !include scenes.yaml
 
-# Acrescenta uma linha ao CSV (cabeçalho criado se o ficheiro não existir).
-# Valores indisponíveis ficam em branco.
+# Acrescenta ao CSV uma linha por unidade: data,unidade,temperatura,modo,ligado
+# (cabeçalho criado se o ficheiro não existir).
+#   modo   = estado do climate (off, cool, heat, auto, dry, fan_only, unavailable)
+#   ligado = 1 se o modo != off, 0 se off, vazio se indisponível
 shell_command:
   append_temperaturas_csv: |-
     sh -c '
     f=/config/temperaturas.csv
-    [ -f "$f" ] || echo "data,living_room,cozinha,office,suite_master,kids_room" > "$f"
-    echo "{{ now().strftime("%Y-%m-%dT%H:%M%z") }}{% for i in ["sensor.ac_living_room_temperatura", "sensor.ac_cozinha_temperatura", "sensor.ac_office_temperatura", "sensor.ac_suite_master_temperatura", "sensor.ac_kids_room_temperatura"] %},{{ states(i) if is_number(states(i)) else "" }}{% endfor %}" >> "$f"
+    [ -f "$f" ] || echo "data,unidade,temperatura,modo,ligado" > "$f"
+    {% set ts = now().strftime("%Y-%m-%dT%H:%M%z") %}
+    {% set acs = {
+      "living_room": "climate.1ec942ca",
+      "cozinha": "climate.c62db069",
+      "office": "climate.c63fd170",
+      "suite_master": "climate.c640155f",
+      "kids_room": "climate.c64015c4"
+    } %}
+    {% for nome, e in acs.items() %}
+    {% set modo = states(e) %}
+    {% set t = state_attr(e, "current_temperature") %}
+    echo "{{ ts }},{{ nome }},{{ t if is_number(t) else "" }},{{ modo }},{{ "" if modo in ["unavailable", "unknown"] else (0 if modo == "off" else 1) }}" >> "$f"
+    {% endfor %}
     '
 
 template:
@@ -42,6 +56,13 @@ template:
         availability: "{{ state_attr('climate.1ec942ca', 'current_temperature') is number }}"
         attributes:
           amostra: "{{ now().isoformat() }}"
+      - name: "AC Living Room Modo"
+        unique_id: ac_living_room_modo
+        icon: mdi:air-conditioner
+        state: "{{ states('climate.1ec942ca') }}"
+        availability: "{{ states('climate.1ec942ca') not in ['unavailable', 'unknown'] }}"
+        attributes:
+          amostra: "{{ now().isoformat() }}"
       - name: "AC Cozinha Temperatura"
         unique_id: ac_cozinha_temp
         unit_of_measurement: "°C"
@@ -49,6 +70,13 @@ template:
         state_class: measurement
         state: "{{ state_attr('climate.c62db069', 'current_temperature') }}"
         availability: "{{ state_attr('climate.c62db069', 'current_temperature') is number }}"
+        attributes:
+          amostra: "{{ now().isoformat() }}"
+      - name: "AC Cozinha Modo"
+        unique_id: ac_cozinha_modo
+        icon: mdi:air-conditioner
+        state: "{{ states('climate.c62db069') }}"
+        availability: "{{ states('climate.c62db069') not in ['unavailable', 'unknown'] }}"
         attributes:
           amostra: "{{ now().isoformat() }}"
       - name: "AC Office Temperatura"
@@ -60,6 +88,13 @@ template:
         availability: "{{ state_attr('climate.c63fd170', 'current_temperature') is number }}"
         attributes:
           amostra: "{{ now().isoformat() }}"
+      - name: "AC Office Modo"
+        unique_id: ac_office_modo
+        icon: mdi:air-conditioner
+        state: "{{ states('climate.c63fd170') }}"
+        availability: "{{ states('climate.c63fd170') not in ['unavailable', 'unknown'] }}"
+        attributes:
+          amostra: "{{ now().isoformat() }}"
       - name: "AC Suite Master Temperatura"
         unique_id: ac_suite_master_temp
         unit_of_measurement: "°C"
@@ -67,6 +102,13 @@ template:
         state_class: measurement
         state: "{{ state_attr('climate.c640155f', 'current_temperature') }}"
         availability: "{{ state_attr('climate.c640155f', 'current_temperature') is number }}"
+        attributes:
+          amostra: "{{ now().isoformat() }}"
+      - name: "AC Suite Master Modo"
+        unique_id: ac_suite_master_modo
+        icon: mdi:air-conditioner
+        state: "{{ states('climate.c640155f') }}"
+        availability: "{{ states('climate.c640155f') not in ['unavailable', 'unknown'] }}"
         attributes:
           amostra: "{{ now().isoformat() }}"
       - name: "AC Kids Room Temperatura"
@@ -78,6 +120,13 @@ template:
         availability: "{{ state_attr('climate.c64015c4', 'current_temperature') is number }}"
         attributes:
           amostra: "{{ now().isoformat() }}"
+      - name: "AC Kids Room Modo"
+        unique_id: ac_kids_room_modo
+        icon: mdi:air-conditioner
+        state: "{{ states('climate.c64015c4') }}"
+        availability: "{{ states('climate.c64015c4') not in ['unavailable', 'unknown'] }}"
+        attributes:
+          amostra: "{{ now().isoformat() }}"
 
 recorder:
   purge_keep_days: 800
@@ -85,7 +134,12 @@ recorder:
   include:
     entities:
       - sensor.ac_living_room_temperatura
+      - sensor.ac_living_room_modo
       - sensor.ac_cozinha_temperatura
+      - sensor.ac_cozinha_modo
       - sensor.ac_office_temperatura
+      - sensor.ac_office_modo
       - sensor.ac_suite_master_temperatura
+      - sensor.ac_suite_master_modo
       - sensor.ac_kids_room_temperatura
+      - sensor.ac_kids_room_modo
