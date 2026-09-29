@@ -18,7 +18,7 @@ scene: !include scenes.yaml
 #   ligado      = 1 se o modo != off, 0 se off, vazio se indisponível
 #   ventilador  = fan_mode (auto, low, medium low, medium, medium high, high)
 # Campos indisponíveis ficam em branco.
-# Linha extra unidade=exterior: temperatura da entidade weather.casa (só a coluna temperatura).
+# Linha extra unidade=exterior: temperatura da entidade weather.forecast_casa (só a coluna temperatura).
 shell_command:
   append_temperaturas_csv: |-
     sh -c '
@@ -39,7 +39,7 @@ shell_command:
     {% set fan = state_attr(e, "fan_mode") %}
     echo "{{ ts }},{{ nome }},{{ t if is_number(t) else "" }},{{ sp if is_number(sp) else "" }},{{ modo }},{{ "" if modo in ["unavailable", "unknown"] else (0 if modo == "off" else 1) }},{{ fan if fan else "" }}" >> "$f"
     {% endfor %}
-    {% set ext = state_attr("weather.casa", "temperature") %}
+    {% set ext = state_attr("weather.forecast_casa", "temperature") %}
     echo "{{ ts }},exterior,{{ ext if is_number(ext) else "" }},,,," >> "$f"
     '
 
@@ -222,8 +222,8 @@ template:
         unit_of_measurement: "°C"
         device_class: temperature
         state_class: measurement
-        state: "{{ state_attr('weather.casa', 'temperature') }}"
-        availability: "{{ state_attr('weather.casa', 'temperature') is number }}"
+        state: "{{ state_attr('weather.forecast_casa', 'temperature') }}"
+        availability: "{{ state_attr('weather.forecast_casa', 'temperature') is number }}"
         attributes:
           amostra: "{{ now().isoformat() }}"
 

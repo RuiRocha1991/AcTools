@@ -11,7 +11,8 @@ Os AC Toyotomi com a app EWPE Smart usam o protocolo Gree. A integração nativa
 | Ficheiro | Onde vai no HA | Conteúdo |
 |---|---|---|
 | `configuration.yaml` | `/homeassistant/configuration.yaml` (= `/config`) | sensores template de temperatura, setpoint, modo, ventilador e temperatura exterior (15 min), `recorder` (800 dias) e `shell_command` para o CSV |
-| `dashboards/ar_condicionado.yaml` | novo painel (raw configuration editor) | gráfico de temperaturas + setpoints, controlo por unidade (modo, ventilador, setpoint), resumo e temperaturas atuais |
+| `dashboards/ar_condicionado.yaml` | novo painel (raw configuration editor) | gráfico de temperaturas, controlo por unidade (modo, ventilador, setpoint), resumo e temperaturas atuais (só cartões nativos) |
+| `dashboards/ar_condicionado_apexcharts.yaml` | idem (alternativa) | igual, mas com gráfico apexcharts que mostra também os setpoints a tracejado (requer HACS) |
 | `automations.yaml` | acrescentar a `/homeassistant/automations.yaml` | automação que escreve 5 linhas (uma por unidade) no CSV a cada 15 min |
 
 ## Unidades
@@ -25,7 +26,7 @@ Os AC Toyotomi com a app EWPE Smart usam o protocolo Gree. A integração nativa
 | Kids Room | `climate.c64015c4` | `sensor.ac_kids_room_temperatura`, `_setpoint`, `_modo`, `_ventilador` |
 
 Temperatura exterior: `sensor.temperatura_exterior`, lida do atributo `temperature`
-da entidade `weather.casa` (integração Met.no).
+da entidade `weather.forecast_casa` (integração Met.no).
 
 Os IDs `climate.*` são específicos desta instalação. Noutra instalação, vê-os em
 *Ferramentas de programador → Estados* (filtro `climate.`).
@@ -33,8 +34,8 @@ Os IDs `climate.*` são específicos desta instalação. Noutra instalação, v�
 ## Instalação
 
 0. A temperatura exterior usa a integração **Met.no** (a que o HA cria por defeito), entidade
-   `weather.casa`. Confirmar o ID em *Ferramentas de programador → Estados* (filtro `weather.`)
-   e, se for outro, substituir `weather.casa` em `configuration.yaml`.
+   `weather.forecast_casa`. Confirmar o ID em *Ferramentas de programador → Estados* (filtro `weather.`)
+   e, se for outro, substituir `weather.forecast_casa` em `configuration.yaml`.
 1. Adicionar a integração **Gree Climate** (*Definições → Dispositivos e serviços*).
    Os AC têm de estar na mesma rede que o HA. Reservar IP fixo no router.
 2. Confirmar `current_temperature` nos atributos de cada `climate.*`
@@ -51,12 +52,16 @@ Os IDs `climate.*` são específicos desta instalação. Noutra instalação, v�
 `dashboards/ar_condicionado.yaml`: *Definições → Painéis → Adicionar painel*, abrir, ✏️ *Editar* →
 ⋮ → *Editor de configuração em bruto* e colar o ficheiro.
 
-- O gráfico usa o `apexcharts-card` (HACS → Frontend). Sem HACS, usar o bloco
-  "alternativa nativa" no fim do ficheiro (`history-graph`).
+- `ar_condicionado.yaml` usa só cartões nativos (`history-graph`). A variante
+  `ar_condicionado_apexcharts.yaml` precisa do `apexcharts-card` (HACS → Frontend);
+  sem ele o primeiro cartão mostra "Erro de configuração".
 - Os cartões por unidade usam `tile` com controlo de setpoint, modo e ventilador
   (requer um HA recente, 2024.9+).
-- Depende dos sensores criados em `configuration.yaml`, por isso só mostra dados depois
-  de aplicada essa configuração.
+- Depende dos sensores criados em `configuration.yaml`. Os sensores template com trigger
+  ficam "Desconhecido" até à **próxima passagem por :00/:15/:30/:45** depois de criados
+  ou de um reinício; os que já existiam recuperam o valor anterior.
+- A entidade do Met.no chama-se normalmente `weather.forecast_<nome>` (ex.: `weather.forecast_casa`).
+  Se aparecer "Entidade não encontrada", confirmar o ID em *Estados* (filtro `weather.`).
 
 ## Como funciona
 
