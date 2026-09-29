@@ -11,6 +11,7 @@ Os AC Toyotomi com a app EWPE Smart usam o protocolo Gree. A integração nativa
 | Ficheiro | Onde vai no HA | Conteúdo |
 |---|---|---|
 | `configuration.yaml` | `/homeassistant/configuration.yaml` (= `/config`) | sensores template de temperatura, setpoint, modo, ventilador e temperatura exterior (15 min), `recorder` (800 dias) e `shell_command` para o CSV |
+| `dashboards/ar_condicionado.yaml` | novo painel (raw configuration editor) | gráfico de temperaturas + setpoints, controlo por unidade (modo, ventilador, setpoint), resumo e temperaturas atuais |
 | `automations.yaml` | acrescentar a `/homeassistant/automations.yaml` | automação que escreve 5 linhas (uma por unidade) no CSV a cada 15 min |
 
 ## Unidades
@@ -44,6 +45,18 @@ Os IDs `climate.*` são específicos desta instalação. Noutra instalação, v�
 5. *Ferramentas de programador → YAML → Verificar configuração* e depois **Reiniciar** o HA.
 6. Testar o CSV sem esperar 15 min: *Ferramentas de programador → Ações →*
    `shell_command.append_temperaturas_csv`. Deve aparecer `/config/temperaturas.csv` com 5 linhas.
+
+## Dashboard
+
+`dashboards/ar_condicionado.yaml`: *Definições → Painéis → Adicionar painel*, abrir, ✏️ *Editar* →
+⋮ → *Editor de configuração em bruto* e colar o ficheiro.
+
+- O gráfico usa o `apexcharts-card` (HACS → Frontend). Sem HACS, usar o bloco
+  "alternativa nativa" no fim do ficheiro (`history-graph`).
+- Os cartões por unidade usam `tile` com controlo de setpoint, modo e ventilador
+  (requer um HA recente, 2024.9+).
+- Depende dos sensores criados em `configuration.yaml`, por isso só mostra dados depois
+  de aplicada essa configuração.
 
 ## Como funciona
 
