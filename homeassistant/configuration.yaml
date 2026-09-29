@@ -9,6 +9,16 @@ automation: !include automations.yaml
 script: !include scripts.yaml
 scene: !include scenes.yaml
 
+# Acrescenta uma linha ao CSV (cabeçalho criado se o ficheiro não existir).
+# Valores indisponíveis ficam em branco.
+shell_command:
+  append_temperaturas_csv: |-
+    sh -c '
+    f=/config/temperaturas.csv
+    [ -f "$f" ] || echo "data,living_room,cozinha,office,suite_master,kids_room" > "$f"
+    echo "{{ now().strftime("%Y-%m-%dT%H:%M%z") }}{% for i in ["sensor.ac_living_room_temperatura", "sensor.ac_cozinha_temperatura", "sensor.ac_office_temperatura", "sensor.ac_suite_master_temperatura", "sensor.ac_kids_room_temperatura"] %},{{ states(i) if is_number(states(i)) else "" }}{% endfor %}" >> "$f"
+    '
+
 template:
   - trigger:
       - platform: time_pattern

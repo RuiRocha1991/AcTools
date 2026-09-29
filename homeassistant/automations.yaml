@@ -1,0 +1,13 @@
+# Acrescentar estas automações ao automations.yaml do Home Assistant
+# (Definições > Automações > ⋮ > Editar em YAML, ou pelo File editor).
+# Se o ficheiro já tiver automações, junta este item à lista existente.
+- id: guardar_temperaturas_csv
+  alias: Guardar temperaturas CSV
+  description: Acrescenta uma linha a /config/temperaturas.csv de 15 em 15 minutos
+  mode: single
+  trigger:
+    - platform: time_pattern
+      minutes: "/15"
+      seconds: 30 # depois de os sensores template atualizarem (segundo 0)
+  action:
+    - service: shell_command.append_temperaturas_csv
