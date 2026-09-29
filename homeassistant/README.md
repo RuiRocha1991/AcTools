@@ -24,18 +24,16 @@ Os AC Toyotomi com a app EWPE Smart usam o protocolo Gree. A integração nativa
 | Kids Room | `climate.c64015c4` | `sensor.ac_kids_room_temperatura`, `_setpoint`, `_modo`, `_ventilador` |
 
 Temperatura exterior: `sensor.temperatura_exterior`, lida do atributo `temperature`
-da entidade `weather.ipma` (integração IPMA, ver abaixo).
+da entidade `weather.casa` (integração Met.no).
 
 Os IDs `climate.*` são específicos desta instalação. Noutra instalação, vê-os em
 *Ferramentas de programador → Estados* (filtro `climate.`).
 
 ## Instalação
 
-0. Adicionar a integração **IPMA** (*Definições → Dispositivos e serviços → Adicionar integração*),
-   escolher a localização/estação mais próxima e dar-lhe o nome **IPMA**, para a entidade ficar
-   `weather.ipma` (o `weather.home` do Met.no, criado por defeito, não é tocado). Confirmar o
-   ID em *Ferramentas de programador → Estados* (filtro `weather.`) e, se for outro, substituir
-   `weather.ipma` em `configuration.yaml`.
+0. A temperatura exterior usa a integração **Met.no** (a que o HA cria por defeito), entidade
+   `weather.casa`. Confirmar o ID em *Ferramentas de programador → Estados* (filtro `weather.`)
+   e, se for outro, substituir `weather.casa` em `configuration.yaml`.
 1. Adicionar a integração **Gree Climate** (*Definições → Dispositivos e serviços*).
    Os AC têm de estar na mesma rede que o HA. Reservar IP fixo no router.
 2. Confirmar `current_temperature` nos atributos de cada `climate.*`
@@ -85,11 +83,10 @@ data,unidade,temperatura,setpoint,modo,ligado,ventilador
 ## Limitações e cuidados
 
 - **Resolução de 1 °C:** os AC reportam inteiros.
-- **Temperatura exterior:** é a observação da estação IPMA mais próxima, atualizada
-  cerca de 1 vez por hora, por isso vários quartos de hora seguidos repetem o mesmo valor.
-  Não é a temperatura exata à porta de casa.
-- **Kids Room:** no arranque `current_temperature` (23) era igual ao setpoint (23).
-  Confirmar que varia; se ficar colado ao setpoint, essa unidade não expõe o sensor de sala.
+- **Temperatura exterior:** o Met.no dá a temperatura prevista/modelada para as coordenadas
+  de casa, não a medição de um termómetro. Serve para estudos de tendência, mas pode divergir
+  alguns graus do valor real (sol direto, microclima). Atualiza cerca de 1 vez por hora,
+  por isso vários quartos de hora seguidos repetem o mesmo valor.
 - Validar as leituras contra um termómetro (alguns modelos têm offset).
 - **Cartão SD:** pode falhar. Fazer **backups automáticos para fora do Pi** e copiar
   o CSV periodicamente. Usar cartão *high endurance*.
