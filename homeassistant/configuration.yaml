@@ -9,15 +9,20 @@ automation: !include automations.yaml
 script: !include scripts.yaml
 scene: !include scenes.yaml
 
-# Acrescenta ao CSV uma linha por unidade: data,unidade,temperatura,modo,ligado
+# Acrescenta ao CSV uma linha por unidade:
+#   data,unidade,temperatura,setpoint,modo,ligado,ventilador
 # (cabeçalho criado se o ficheiro não existir).
-#   modo   = estado do climate (off, cool, heat, auto, dry, fan_only, unavailable)
-#   ligado = 1 se o modo != off, 0 se off, vazio se indisponível
+#   temperatura = temperatura ambiente lida pelo AC (current_temperature)
+#   setpoint    = temperatura pedida (atributo temperature)
+#   modo        = estado do climate (off, cool, heat, auto, dry, fan_only, unavailable)
+#   ligado      = 1 se o modo != off, 0 se off, vazio se indisponível
+#   ventilador  = fan_mode (auto, low, medium low, medium, medium high, high)
+# Campos indisponíveis ficam em branco.
 shell_command:
   append_temperaturas_csv: |-
     sh -c '
     f=/config/temperaturas.csv
-    [ -f "$f" ] || echo "data,unidade,temperatura,modo,ligado" > "$f"
+    [ -f "$f" ] || echo "data,unidade,temperatura,setpoint,modo,ligado,ventilador" > "$f"
     {% set ts = now().strftime("%Y-%m-%dT%H:%M%z") %}
     {% set acs = {
       "living_room": "climate.1ec942ca",
@@ -29,7 +34,9 @@ shell_command:
     {% for nome, e in acs.items() %}
     {% set modo = states(e) %}
     {% set t = state_attr(e, "current_temperature") %}
-    echo "{{ ts }},{{ nome }},{{ t if is_number(t) else "" }},{{ modo }},{{ "" if modo in ["unavailable", "unknown"] else (0 if modo == "off" else 1) }}" >> "$f"
+    {% set sp = state_attr(e, "temperature") %}
+    {% set fan = state_attr(e, "fan_mode") %}
+    echo "{{ ts }},{{ nome }},{{ t if is_number(t) else "" }},{{ sp if is_number(sp) else "" }},{{ modo }},{{ "" if modo in ["unavailable", "unknown"] else (0 if modo == "off" else 1) }},{{ fan if fan else "" }}" >> "$f"
     {% endfor %}
     '
 
@@ -56,11 +63,27 @@ template:
         availability: "{{ state_attr('climate.1ec942ca', 'current_temperature') is number }}"
         attributes:
           amostra: "{{ now().isoformat() }}"
+      - name: "AC Living Room Setpoint"
+        unique_id: ac_living_room_setpoint
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        state: "{{ state_attr('climate.1ec942ca', 'temperature') }}"
+        availability: "{{ state_attr('climate.1ec942ca', 'temperature') is number }}"
+        attributes:
+          amostra: "{{ now().isoformat() }}"
       - name: "AC Living Room Modo"
         unique_id: ac_living_room_modo
         icon: mdi:air-conditioner
         state: "{{ states('climate.1ec942ca') }}"
         availability: "{{ states('climate.1ec942ca') not in ['unavailable', 'unknown'] }}"
+        attributes:
+          amostra: "{{ now().isoformat() }}"
+      - name: "AC Living Room Ventilador"
+        unique_id: ac_living_room_ventilador
+        icon: mdi:fan
+        state: "{{ state_attr('climate.1ec942ca', 'fan_mode') }}"
+        availability: "{{ state_attr('climate.1ec942ca', 'fan_mode') is string }}"
         attributes:
           amostra: "{{ now().isoformat() }}"
       - name: "AC Cozinha Temperatura"
@@ -72,11 +95,27 @@ template:
         availability: "{{ state_attr('climate.c62db069', 'current_temperature') is number }}"
         attributes:
           amostra: "{{ now().isoformat() }}"
+      - name: "AC Cozinha Setpoint"
+        unique_id: ac_cozinha_setpoint
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        state: "{{ state_attr('climate.c62db069', 'temperature') }}"
+        availability: "{{ state_attr('climate.c62db069', 'temperature') is number }}"
+        attributes:
+          amostra: "{{ now().isoformat() }}"
       - name: "AC Cozinha Modo"
         unique_id: ac_cozinha_modo
         icon: mdi:air-conditioner
         state: "{{ states('climate.c62db069') }}"
         availability: "{{ states('climate.c62db069') not in ['unavailable', 'unknown'] }}"
+        attributes:
+          amostra: "{{ now().isoformat() }}"
+      - name: "AC Cozinha Ventilador"
+        unique_id: ac_cozinha_ventilador
+        icon: mdi:fan
+        state: "{{ state_attr('climate.c62db069', 'fan_mode') }}"
+        availability: "{{ state_attr('climate.c62db069', 'fan_mode') is string }}"
         attributes:
           amostra: "{{ now().isoformat() }}"
       - name: "AC Office Temperatura"
@@ -88,11 +127,27 @@ template:
         availability: "{{ state_attr('climate.c63fd170', 'current_temperature') is number }}"
         attributes:
           amostra: "{{ now().isoformat() }}"
+      - name: "AC Office Setpoint"
+        unique_id: ac_office_setpoint
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        state: "{{ state_attr('climate.c63fd170', 'temperature') }}"
+        availability: "{{ state_attr('climate.c63fd170', 'temperature') is number }}"
+        attributes:
+          amostra: "{{ now().isoformat() }}"
       - name: "AC Office Modo"
         unique_id: ac_office_modo
         icon: mdi:air-conditioner
         state: "{{ states('climate.c63fd170') }}"
         availability: "{{ states('climate.c63fd170') not in ['unavailable', 'unknown'] }}"
+        attributes:
+          amostra: "{{ now().isoformat() }}"
+      - name: "AC Office Ventilador"
+        unique_id: ac_office_ventilador
+        icon: mdi:fan
+        state: "{{ state_attr('climate.c63fd170', 'fan_mode') }}"
+        availability: "{{ state_attr('climate.c63fd170', 'fan_mode') is string }}"
         attributes:
           amostra: "{{ now().isoformat() }}"
       - name: "AC Suite Master Temperatura"
@@ -104,11 +159,27 @@ template:
         availability: "{{ state_attr('climate.c640155f', 'current_temperature') is number }}"
         attributes:
           amostra: "{{ now().isoformat() }}"
+      - name: "AC Suite Master Setpoint"
+        unique_id: ac_suite_master_setpoint
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        state: "{{ state_attr('climate.c640155f', 'temperature') }}"
+        availability: "{{ state_attr('climate.c640155f', 'temperature') is number }}"
+        attributes:
+          amostra: "{{ now().isoformat() }}"
       - name: "AC Suite Master Modo"
         unique_id: ac_suite_master_modo
         icon: mdi:air-conditioner
         state: "{{ states('climate.c640155f') }}"
         availability: "{{ states('climate.c640155f') not in ['unavailable', 'unknown'] }}"
+        attributes:
+          amostra: "{{ now().isoformat() }}"
+      - name: "AC Suite Master Ventilador"
+        unique_id: ac_suite_master_ventilador
+        icon: mdi:fan
+        state: "{{ state_attr('climate.c640155f', 'fan_mode') }}"
+        availability: "{{ state_attr('climate.c640155f', 'fan_mode') is string }}"
         attributes:
           amostra: "{{ now().isoformat() }}"
       - name: "AC Kids Room Temperatura"
@@ -120,11 +191,27 @@ template:
         availability: "{{ state_attr('climate.c64015c4', 'current_temperature') is number }}"
         attributes:
           amostra: "{{ now().isoformat() }}"
+      - name: "AC Kids Room Setpoint"
+        unique_id: ac_kids_room_setpoint
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        state: "{{ state_attr('climate.c64015c4', 'temperature') }}"
+        availability: "{{ state_attr('climate.c64015c4', 'temperature') is number }}"
+        attributes:
+          amostra: "{{ now().isoformat() }}"
       - name: "AC Kids Room Modo"
         unique_id: ac_kids_room_modo
         icon: mdi:air-conditioner
         state: "{{ states('climate.c64015c4') }}"
         availability: "{{ states('climate.c64015c4') not in ['unavailable', 'unknown'] }}"
+        attributes:
+          amostra: "{{ now().isoformat() }}"
+      - name: "AC Kids Room Ventilador"
+        unique_id: ac_kids_room_ventilador
+        icon: mdi:fan
+        state: "{{ state_attr('climate.c64015c4', 'fan_mode') }}"
+        availability: "{{ state_attr('climate.c64015c4', 'fan_mode') is string }}"
         attributes:
           amostra: "{{ now().isoformat() }}"
 
@@ -134,12 +221,22 @@ recorder:
   include:
     entities:
       - sensor.ac_living_room_temperatura
+      - sensor.ac_living_room_setpoint
       - sensor.ac_living_room_modo
+      - sensor.ac_living_room_ventilador
       - sensor.ac_cozinha_temperatura
+      - sensor.ac_cozinha_setpoint
       - sensor.ac_cozinha_modo
+      - sensor.ac_cozinha_ventilador
       - sensor.ac_office_temperatura
+      - sensor.ac_office_setpoint
       - sensor.ac_office_modo
+      - sensor.ac_office_ventilador
       - sensor.ac_suite_master_temperatura
+      - sensor.ac_suite_master_setpoint
       - sensor.ac_suite_master_modo
+      - sensor.ac_suite_master_ventilador
       - sensor.ac_kids_room_temperatura
+      - sensor.ac_kids_room_setpoint
       - sensor.ac_kids_room_modo
+      - sensor.ac_kids_room_ventilador

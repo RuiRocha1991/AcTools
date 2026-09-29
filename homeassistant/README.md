@@ -10,18 +10,18 @@ Os AC Toyotomi com a app EWPE Smart usam o protocolo Gree. A integração nativa
 
 | Ficheiro | Onde vai no HA | Conteúdo |
 |---|---|---|
-| `configuration.yaml` | `/homeassistant/configuration.yaml` (= `/config`) | sensores template de temperatura e modo (15 min), `recorder` (800 dias) e `shell_command` para o CSV |
+| `configuration.yaml` | `/homeassistant/configuration.yaml` (= `/config`) | sensores template de temperatura, setpoint, modo e ventilador (15 min), `recorder` (800 dias) e `shell_command` para o CSV |
 | `automations.yaml` | acrescentar a `/homeassistant/automations.yaml` | automação que escreve 5 linhas (uma por unidade) no CSV a cada 15 min |
 
 ## Unidades
 
 | Divisão | Entidade `climate` | Sensores criados |
 |---|---|---|
-| Living Room | `climate.1ec942ca` | `sensor.ac_living_room_temperatura`, `sensor.ac_living_room_modo` |
-| Cozinha | `climate.c62db069` | `sensor.ac_cozinha_temperatura`, `sensor.ac_cozinha_modo` |
-| Office | `climate.c63fd170` | `sensor.ac_office_temperatura`, `sensor.ac_office_modo` |
-| Suite Master | `climate.c640155f` | `sensor.ac_suite_master_temperatura`, `sensor.ac_suite_master_modo` |
-| Kids Room | `climate.c64015c4` | `sensor.ac_kids_room_temperatura`, `sensor.ac_kids_room_modo` |
+| Living Room | `climate.1ec942ca` | `sensor.ac_living_room_temperatura`, `_setpoint`, `_modo`, `_ventilador` |
+| Cozinha | `climate.c62db069` | `sensor.ac_cozinha_temperatura`, `_setpoint`, `_modo`, `_ventilador` |
+| Office | `climate.c63fd170` | `sensor.ac_office_temperatura`, `_setpoint`, `_modo`, `_ventilador` |
+| Suite Master | `climate.c640155f` | `sensor.ac_suite_master_temperatura`, `_setpoint`, `_modo`, `_ventilador` |
+| Kids Room | `climate.c64015c4` | `sensor.ac_kids_room_temperatura`, `_setpoint`, `_modo`, `_ventilador` |
 
 Os IDs `climate.*` são específicos desta instalação. Noutra instalação, vê-os em
 *Ferramentas de programador → Estados* (filtro `climate.`).
@@ -42,25 +42,28 @@ Os IDs `climate.*` são específicos desta instalação. Noutra instalação, v�
 ## Como funciona
 
 - Um *template* com `time_pattern` corre nos minutos 0/15/30/45: atualiza as 5
-  entidades (`homeassistant.update_entity`) e grava, por unidade, um sensor de
-  **temperatura** (`state_class: measurement`) e um sensor de **modo**.
+  entidades (`homeassistant.update_entity`) e grava, por unidade, 4 sensores:
+  **temperatura** ambiente, **setpoint** (temperatura pedida), **modo** e **ventilador**.
 - O **modo** é o estado da entidade `climate`: `off` (desligado), `cool`, `heat`,
   `auto`, `dry` ou `fan_only`. Não há sensor separado de ligado/desligado:
   ligado = modo diferente de `off`.
+- O **ventilador** é o atributo `fan_mode`: `auto`, `low`, `medium low`, `medium`,
+  `medium high`, `high`.
 - O atributo `amostra` (timestamp) força uma linha nova no histórico mesmo quando
   o valor não muda, para não haver buracos na série.
-- O `recorder` guarda **só** estes 10 sensores durante 800 dias. `commit_interval: 60`
+- O `recorder` guarda **só** estes 20 sensores durante 800 dias. `commit_interval: 60`
   reduz escritas no cartão SD.
 - A automação corre aos 30 s de cada quarto de hora e acrescenta **uma linha por
   unidade** a `/config/temperaturas.csv`:
 
 ```
-data,unidade,temperatura,modo,ligado
-2026-09-29T16:45+0100,living_room,24,cool,1
-2026-09-29T16:45+0100,cozinha,27,off,0
+data,unidade,temperatura,setpoint,modo,ligado,ventilador
+2026-09-29T16:45+0100,living_room,24,22,cool,1,medium low
+2026-09-29T16:45+0100,cozinha,27,25,off,0,auto
 ```
 
-  `ligado` é 1/0, e fica em branco (tal como a temperatura) se a unidade estiver indisponível.
+  `ligado` é 1/0. Campos indisponíveis ficam em branco.
+  Com a unidade em `off`, o setpoint e o ventilador são os últimos definidos, não valores em uso.
 
 ## Obter os dados para estudo
 
