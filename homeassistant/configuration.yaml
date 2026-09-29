@@ -18,6 +18,7 @@ scene: !include scenes.yaml
 #   ligado      = 1 se o modo != off, 0 se off, vazio se indisponível
 #   ventilador  = fan_mode (auto, low, medium low, medium, medium high, high)
 # Campos indisponíveis ficam em branco.
+# Linha extra unidade=exterior: temperatura da entidade weather.ipma (só a coluna temperatura).
 shell_command:
   append_temperaturas_csv: |-
     sh -c '
@@ -38,6 +39,8 @@ shell_command:
     {% set fan = state_attr(e, "fan_mode") %}
     echo "{{ ts }},{{ nome }},{{ t if is_number(t) else "" }},{{ sp if is_number(sp) else "" }},{{ modo }},{{ "" if modo in ["unavailable", "unknown"] else (0 if modo == "off" else 1) }},{{ fan if fan else "" }}" >> "$f"
     {% endfor %}
+    {% set ext = state_attr("weather.ipma", "temperature") %}
+    echo "{{ ts }},exterior,{{ ext if is_number(ext) else "" }},,,," >> "$f"
     '
 
 template:
@@ -214,6 +217,15 @@ template:
         availability: "{{ state_attr('climate.c64015c4', 'fan_mode') is string }}"
         attributes:
           amostra: "{{ now().isoformat() }}"
+      - name: "Temperatura Exterior"
+        unique_id: temperatura_exterior_ipma
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        state: "{{ state_attr('weather.ipma', 'temperature') }}"
+        availability: "{{ state_attr('weather.ipma', 'temperature') is number }}"
+        attributes:
+          amostra: "{{ now().isoformat() }}"
 
 recorder:
   purge_keep_days: 800
@@ -240,3 +252,4 @@ recorder:
       - sensor.ac_kids_room_setpoint
       - sensor.ac_kids_room_modo
       - sensor.ac_kids_room_ventilador
+      - sensor.temperatura_exterior

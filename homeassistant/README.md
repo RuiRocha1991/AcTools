@@ -10,7 +10,7 @@ Os AC Toyotomi com a app EWPE Smart usam o protocolo Gree. A integração nativa
 
 | Ficheiro | Onde vai no HA | Conteúdo |
 |---|---|---|
-| `configuration.yaml` | `/homeassistant/configuration.yaml` (= `/config`) | sensores template de temperatura, setpoint, modo e ventilador (15 min), `recorder` (800 dias) e `shell_command` para o CSV |
+| `configuration.yaml` | `/homeassistant/configuration.yaml` (= `/config`) | sensores template de temperatura, setpoint, modo, ventilador e temperatura exterior (15 min), `recorder` (800 dias) e `shell_command` para o CSV |
 | `automations.yaml` | acrescentar a `/homeassistant/automations.yaml` | automação que escreve 5 linhas (uma por unidade) no CSV a cada 15 min |
 
 ## Unidades
@@ -23,11 +23,19 @@ Os AC Toyotomi com a app EWPE Smart usam o protocolo Gree. A integração nativa
 | Suite Master | `climate.c640155f` | `sensor.ac_suite_master_temperatura`, `_setpoint`, `_modo`, `_ventilador` |
 | Kids Room | `climate.c64015c4` | `sensor.ac_kids_room_temperatura`, `_setpoint`, `_modo`, `_ventilador` |
 
+Temperatura exterior: `sensor.temperatura_exterior`, lida do atributo `temperature`
+da entidade `weather.ipma` (integração IPMA, ver abaixo).
+
 Os IDs `climate.*` são específicos desta instalação. Noutra instalação, vê-os em
 *Ferramentas de programador → Estados* (filtro `climate.`).
 
 ## Instalação
 
+0. Adicionar a integração **IPMA** (*Definições → Dispositivos e serviços → Adicionar integração*),
+   escolher a localização/estação mais próxima e dar-lhe o nome **IPMA**, para a entidade ficar
+   `weather.ipma` (o `weather.home` do Met.no, criado por defeito, não é tocado). Confirmar o
+   ID em *Ferramentas de programador → Estados* (filtro `weather.`) e, se for outro, substituir
+   `weather.ipma` em `configuration.yaml`.
 1. Adicionar a integração **Gree Climate** (*Definições → Dispositivos e serviços*).
    Os AC têm de estar na mesma rede que o HA. Reservar IP fixo no router.
 2. Confirmar `current_temperature` nos atributos de cada `climate.*`
@@ -62,6 +70,9 @@ data,unidade,temperatura,setpoint,modo,ligado,ventilador
 2026-09-29T16:45+0100,cozinha,27,25,off,0,auto
 ```
 
+  A cada amostra há ainda uma linha `exterior`, só com a coluna `temperatura`:
+  `2026-09-29T16:45+0100,exterior,18.4,,,,`
+
   `ligado` é 1/0. Campos indisponíveis ficam em branco.
   Com a unidade em `off`, o setpoint e o ventilador são os últimos definidos, não valores em uso.
 
@@ -74,6 +85,9 @@ data,unidade,temperatura,setpoint,modo,ligado,ventilador
 ## Limitações e cuidados
 
 - **Resolução de 1 °C:** os AC reportam inteiros.
+- **Temperatura exterior:** é a observação da estação IPMA mais próxima, atualizada
+  cerca de 1 vez por hora, por isso vários quartos de hora seguidos repetem o mesmo valor.
+  Não é a temperatura exata à porta de casa.
 - **Kids Room:** no arranque `current_temperature` (23) era igual ao setpoint (23).
   Confirmar que varia; se ficar colado ao setpoint, essa unidade não expõe o sensor de sala.
 - Validar as leituras contra um termómetro (alguns modelos têm offset).
