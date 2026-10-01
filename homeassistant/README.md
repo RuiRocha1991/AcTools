@@ -55,6 +55,8 @@ Os IDs `climate.*` são específicos desta instalação. Noutra instalação, v�
 - `ar_condicionado.yaml` usa só cartões nativos (`history-graph`). A variante
   `ar_condicionado_apexcharts.yaml` precisa do `apexcharts-card` (HACS → Frontend);
   sem ele o primeiro cartão mostra "Erro de configuração".
+- Os painéis usam a vista **Secções**: o gráfico ocupa a largura total no topo, seguido das unidades,
+  do resumo e das temperaturas atuais.
 - Os cartões por unidade usam `tile` com controlo de setpoint, modo e ventilador
   (requer um HA recente, 2024.9+).
 - Depende dos sensores criados em `configuration.yaml`. Os sensores template com trigger
