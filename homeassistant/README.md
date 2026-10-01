@@ -110,6 +110,21 @@ data,unidade,temperatura,setpoint,modo,ligado,ventilador
   o CSV periodicamente. Usar cartão *high endurance*.
 - `recorder.include` só guarda histórico destes sensores. Trocar por `exclude` para manter o resto.
 
+## Resolução de problemas: CSV / `shell_command`
+
+- **"serviço desconhecido: shell_command.append_temperaturas_csv"**: o bloco `shell_command:` não
+  foi carregado. Confirmar que está no `configuration.yaml` (uma só vez, sem indentação), que a
+  verificação de configuração passa e que o HA foi **reiniciado** (recarregar YAML não chega).
+- **Como saber se o serviço existe:** *Ferramentas de programador → Ações*, escrever `shell_command`.
+  Deve aparecer `shell_command.append_temperaturas_csv`.
+- **"Não existe a pasta /config":** nos add-ons (File editor, Terminal & SSH) a pasta de configuração
+  chama-se `/homeassistant`; dentro do Home Assistant Core chama-se `/config`. É a mesma pasta, por isso
+  o CSV criado em `/config/temperaturas.csv` aparece no File editor como `temperaturas.csv`, ao lado do
+  `configuration.yaml`.
+- **Teste mínimo** (isola o problema): acrescentar `teste_shell: 'echo ok > /config/teste.txt'` em
+  `shell_command:`, reiniciar, chamar `shell_command.teste_shell` e ver se aparece `teste.txt`.
+- Erros de execução aparecem em *Definições → Sistema → Registos* (filtrar por `shell_command`).
+
 ## Base de dados MongoDB (opcional)
 
 O HA não escreve em MongoDB nativamente e o Pi 3 (1 GB RAM, ARMv8.0) não é
