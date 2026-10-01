@@ -47,8 +47,15 @@ template:
   - trigger:
       - platform: time_pattern
         minutes: "/15"
+      # também ao arrancar o HA (evita "unknown" depois de reiniciar)
+      - platform: homeassistant
+        event: start
+      # disparo manual: Ferramentas de programador > Eventos > ac_amostra
+      - platform: event
+        event_type: ac_amostra
     action:
       - service: homeassistant.update_entity
+        continue_on_error: true # se um AC falhar, os sensores atualizam na mesma
         target:
           entity_id:
             - climate.1ec942ca

@@ -123,6 +123,12 @@ data,unidade,temperatura,setpoint,modo,ligado,ventilador
   `configuration.yaml`.
 - **Teste mínimo** (isola o problema): acrescentar `teste_shell: 'echo ok > /config/teste.txt'` em
   `shell_command:`, reiniciar, chamar `shell_command.teste_shell` e ver se aparece `teste.txt`.
+- **Sensores template "unknown" / sem o atributo `amostra`:** o template com trigger nunca correu.
+  O trigger inclui o arranque do HA e o evento manual `ac_amostra` (*Ferramentas de programador →
+  Eventos → Disparar evento*). Depois de alterar `template:`, usar a ação `template.reload`
+  (*Template: Recarregar*) e disparar o evento. Se continuar `unknown`, ver o registo
+  (filtrar por `template`).
+- Todas as ocorrências de `weather.casa` devem ser `weather.forecast_casa` (3 no `configuration.yaml`).
 - Erros de execução aparecem em *Definições → Sistema → Registos* (filtrar por `shell_command`).
 
 ## Base de dados MongoDB (opcional)
