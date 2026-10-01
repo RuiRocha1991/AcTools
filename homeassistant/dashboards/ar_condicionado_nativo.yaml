@@ -1,11 +1,10 @@
-# Dashboard "Ar Condicionado" - variante com gráfico apexcharts-card
+# Dashboard "Ar Condicionado" (5 unidades Gree + temperatura exterior)
 # Vista "Secções": o gráfico ocupa a largura total no topo.
-#
-# Igual a ar_condicionado.yaml, mas o gráfico mostra também os setpoints a tracejado.
-# Requer o cartão "apexcharts-card" (HACS ou instalação manual em /config/www).
 #
 # Como usar: Definições > Painéis > Adicionar painel > (abrir) > ✏️ Editar >
 # ⋮ > Editor de configuração em bruto > colar este ficheiro.
+#
+# Só usa cartões nativos (não precisa de apexcharts-card nem de HACS).
 title: Ar Condicionado
 views:
 - title: Ar Condicionado
@@ -17,85 +16,22 @@ views:
   - type: grid
     column_span: 4
     cards:
-    - type: custom:apexcharts-card
-      header:
-        show: true
-        title: Temperaturas
-        show_states: false
-      graph_span: 1d
-      update_interval: 5min
-      chart_type: line
-      apex_config:
-        legend:
-          position: top
-          horizontalAlign: right
-        xaxis:
-          labels:
-            datetimeUTC: false
-      yaxis:
-      - min: 10
-        max: 35
-        decimals: 0
-      series:
+    - type: history-graph
+      title: Temperaturas
+      hours_to_show: 24
+      entities:
       - entity: sensor.ac_living_room_temperatura
         name: Sala de estar
-        color: '#3b82f6'
-        stroke_width: 2
       - entity: sensor.ac_cozinha_temperatura
         name: Cozinha
-        color: '#10b981'
-        stroke_width: 2
       - entity: sensor.ac_office_temperatura
         name: Office
-        color: '#a855f7'
-        stroke_width: 2
       - entity: sensor.ac_suite_master_temperatura
         name: Suite Master
-        color: '#ec4899'
-        stroke_width: 2
       - entity: sensor.ac_kids_room_temperatura
         name: Quarto Crianças
-        color: '#eab308'
-        stroke_width: 2
       - entity: sensor.temperatura_exterior
         name: Exterior
-        color: '#f97316'
-        stroke_width: 3
-      - entity: sensor.ac_living_room_setpoint
-        name: Setpoint Sala de estar
-        color: '#3b82f6'
-        stroke_width: 1
-        stroke_dash: 4
-        show:
-          in_legend: false
-      - entity: sensor.ac_cozinha_setpoint
-        name: Setpoint Cozinha
-        color: '#10b981'
-        stroke_width: 1
-        stroke_dash: 4
-        show:
-          in_legend: false
-      - entity: sensor.ac_office_setpoint
-        name: Setpoint Office
-        color: '#a855f7'
-        stroke_width: 1
-        stroke_dash: 4
-        show:
-          in_legend: false
-      - entity: sensor.ac_suite_master_setpoint
-        name: Setpoint Suite Master
-        color: '#ec4899'
-        stroke_width: 1
-        stroke_dash: 4
-        show:
-          in_legend: false
-      - entity: sensor.ac_kids_room_setpoint
-        name: Setpoint Quarto Crianças
-        color: '#eab308'
-        stroke_width: 1
-        stroke_dash: 4
-        show:
-          in_legend: false
       grid_options:
         columns: full
   - type: grid

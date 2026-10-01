@@ -1,0 +1,18 @@
+# Extra (opcional): cartão "Resumo" em tabela única (Unidade | Estado e modo | Ventilador).
+# Não faz parte do painel principal. Para usar, acrescentar este cartão à secção das unidades
+# (em ar_condicionado.yaml, a seguir ao último "tile") ou criá-lo como cartão avulso (tipo Markdown).
+# grid_options.columns: 18 põe-no à direita dos 5 cartões dos AC num ecrã largo.
+# O ventilador mostra "—" quando a unidade está desligada/indisponível (o AC guarda o último valor).
+type: markdown
+title: Resumo
+grid_options:
+  columns: 18
+content: |-
+  {% set fan = {'auto': 'Auto', 'low': 'Baixo', 'medium low': 'Médio-baixo', 'medium': 'Médio', 'medium high': 'Médio-alto', 'high': 'Alto'} %}
+  | Unidade | Estado e modo | Ventilador |
+  | --- | --- | --- |
+  | Sala de estar | {{ state_translated('climate.1ec942ca') }} | {{ '—' if states('climate.1ec942ca') in ['off', 'unavailable', 'unknown'] else fan.get(state_attr('climate.1ec942ca', 'fan_mode'), state_attr('climate.1ec942ca', 'fan_mode')) }} |
+  | Cozinha | {{ state_translated('climate.c62db069') }} | {{ '—' if states('climate.c62db069') in ['off', 'unavailable', 'unknown'] else fan.get(state_attr('climate.c62db069', 'fan_mode'), state_attr('climate.c62db069', 'fan_mode')) }} |
+  | Office | {{ state_translated('climate.c63fd170') }} | {{ '—' if states('climate.c63fd170') in ['off', 'unavailable', 'unknown'] else fan.get(state_attr('climate.c63fd170', 'fan_mode'), state_attr('climate.c63fd170', 'fan_mode')) }} |
+  | Suite Master | {{ state_translated('climate.c640155f') }} | {{ '—' if states('climate.c640155f') in ['off', 'unavailable', 'unknown'] else fan.get(state_attr('climate.c640155f', 'fan_mode'), state_attr('climate.c640155f', 'fan_mode')) }} |
+  | Quarto Crianças | {{ state_translated('climate.c64015c4') }} | {{ '—' if states('climate.c64015c4') in ['off', 'unavailable', 'unknown'] else fan.get(state_attr('climate.c64015c4', 'fan_mode'), state_attr('climate.c64015c4', 'fan_mode')) }} |

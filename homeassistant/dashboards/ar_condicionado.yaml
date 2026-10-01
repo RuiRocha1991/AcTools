@@ -1,130 +1,179 @@
 # Dashboard "Ar Condicionado" (5 unidades Gree + temperatura exterior)
-# Vista "Secções": o gráfico ocupa a largura total no topo.
+# Vista "Secções": gráfico de largura total no topo e, por baixo, os 5 cartões dos AC.
+#
+# Requer o cartão "apexcharts-card" (ver README: instalação manual sem HACS).
+# Alternativa só com cartões nativos: ar_condicionado_nativo.yaml
 #
 # Como usar: Definições > Painéis > Adicionar painel > (abrir) > ✏️ Editar >
 # ⋮ > Editor de configuração em bruto > colar este ficheiro.
-#
-# Só usa cartões nativos (não precisa de HACS). Para um gráfico com os setpoints a
-# tracejado, usar ar_condicionado_apexcharts.yaml (requer apexcharts-card).
 title: Ar Condicionado
 views:
-- title: Ar Condicionado
-  path: ar-condicionado
-  icon: mdi:snowflake
-  type: sections
-  max_columns: 4
-  sections:
-  - type: grid
-    column_span: 4
-    cards:
-    - type: history-graph
-      title: Temperaturas
-      hours_to_show: 24
-      entities:
-      - entity: sensor.ac_living_room_temperatura
-        name: Sala de estar
-      - entity: sensor.ac_cozinha_temperatura
-        name: Cozinha
-      - entity: sensor.ac_office_temperatura
-        name: Office
-      - entity: sensor.ac_suite_master_temperatura
-        name: Suite Master
-      - entity: sensor.ac_kids_room_temperatura
-        name: Quarto Crianças
-      - entity: sensor.temperatura_exterior
-        name: Exterior
-      grid_options:
-        columns: full
-  - type: grid
-    column_span: 2
-    cards:
-    - type: heading
-      heading: Unidades
-      icon: mdi:air-conditioner
-    - type: tile
-      entity: climate.1ec942ca
-      name: Sala de estar
-      features: &id001
-      - type: target-temperature
-      - type: climate-hvac-modes
-        hvac_modes:
-        - 'off'
-        - cool
-        - heat
-        - auto
-        - dry
-        - fan_only
-      - type: climate-fan-modes
-    - type: tile
-      entity: climate.c62db069
-      name: Cozinha
-      features: *id001
-    - type: tile
-      entity: climate.c63fd170
-      name: Office
-      features: *id001
-    - type: tile
-      entity: climate.c640155f
-      name: Suite Master
-      features: *id001
-    - type: tile
-      entity: climate.c64015c4
-      name: Quarto Crianças
-      features: *id001
-  - type: grid
-    cards:
-    - type: entities
-      title: Resumo
-      state_color: true
-      entities:
-      - type: section
-        label: Estado e modo
-      - entity: sensor.ac_living_room_modo
-        name: Sala de estar
-      - entity: sensor.ac_cozinha_modo
-        name: Cozinha
-      - entity: sensor.ac_office_modo
-        name: Office
-      - entity: sensor.ac_suite_master_modo
-        name: Suite Master
-      - entity: sensor.ac_kids_room_modo
-        name: Quarto Crianças
-      - type: section
-        label: Ventilador
-      - entity: sensor.ac_living_room_ventilador
-        name: Sala de estar
-      - entity: sensor.ac_cozinha_ventilador
-        name: Cozinha
-      - entity: sensor.ac_office_ventilador
-        name: Office
-      - entity: sensor.ac_suite_master_ventilador
-        name: Suite Master
-      - entity: sensor.ac_kids_room_ventilador
-        name: Quarto Crianças
-      - type: section
-        label: Exterior
-      - entity: sensor.temperatura_exterior
-        name: Temperatura Exterior
-      - type: attribute
-        entity: weather.forecast_casa
-        attribute: humidity
-        name: Humidade Exterior
-        suffix: ' %'
-  - type: grid
-    cards:
-    - type: glance
-      title: Temperaturas atuais
-      show_state: true
-      entities:
-      - entity: sensor.ac_living_room_temperatura
-        name: Sala
-      - entity: sensor.ac_cozinha_temperatura
-        name: Cozinha
-      - entity: sensor.ac_office_temperatura
-        name: Office
-      - entity: sensor.ac_suite_master_temperatura
-        name: Suite
-      - entity: sensor.ac_kids_room_temperatura
-        name: Crianças
-      - entity: sensor.temperatura_exterior
-        name: Exterior
+  - title: Ar Condicionado
+    path: ar-condicionado
+    icon: mdi:snowflake
+    type: sections
+    max_columns: 4
+    sections:
+      - type: grid
+        column_span: 4
+        cards:
+          - type: custom:apexcharts-card
+            section_mode: true
+            grid_options:
+              columns: full
+              rows: 4
+            header:
+              show: true
+              title: Temperaturas
+              show_states: false
+            graph_span: 1d
+            update_interval: 5min
+            chart_type: line
+            apex_config:
+              legend:
+                position: top
+                horizontalAlign: right
+              xaxis:
+                labels:
+                  datetimeUTC: false
+            yaxis:
+              - decimals: 0
+                align_to: 5
+                apex_config:
+                  stepSize: 5
+            series:
+              - entity: sensor.ac_living_room_temperatura
+                name: Sala de estar
+                color: '#3b82f6'
+                stroke_width: 2
+              - entity: sensor.ac_cozinha_temperatura
+                name: Cozinha
+                color: '#10b981'
+                stroke_width: 2
+              - entity: sensor.ac_office_temperatura
+                name: Office
+                color: '#a855f7'
+                stroke_width: 2
+              - entity: sensor.ac_suite_master_temperatura
+                name: Suite Master
+                color: '#ec4899'
+                stroke_width: 2
+              - entity: sensor.ac_kids_room_temperatura
+                name: Quarto Crianças
+                color: '#eab308'
+                stroke_width: 2
+              - entity: sensor.temperatura_exterior
+                name: Exterior
+                color: '#f97316'
+                stroke_width: 3
+              - entity: sensor.ac_living_room_setpoint
+                name: Setpoint Sala de estar
+                color: '#3b82f6'
+                stroke_width: 1
+                stroke_dash: 4
+                show:
+                  in_legend: false
+              - entity: sensor.ac_cozinha_setpoint
+                name: Setpoint Cozinha
+                color: '#10b981'
+                stroke_width: 1
+                stroke_dash: 4
+                show:
+                  in_legend: false
+              - entity: sensor.ac_office_setpoint
+                name: Setpoint Office
+                color: '#a855f7'
+                stroke_width: 1
+                stroke_dash: 4
+                show:
+                  in_legend: false
+              - entity: sensor.ac_suite_master_setpoint
+                name: Setpoint Suite Master
+                color: '#ec4899'
+                stroke_width: 1
+                stroke_dash: 4
+                show:
+                  in_legend: false
+              - entity: sensor.ac_kids_room_setpoint
+                name: Setpoint Quarto Crianças
+                color: '#eab308'
+                stroke_width: 1
+                stroke_dash: 4
+                show:
+                  in_legend: false
+      - type: grid
+        column_span: 4
+        cards:
+          - type: heading
+            heading: Unidades
+            icon: mdi:air-conditioner
+          - type: tile
+            entity: climate.1ec942ca
+            name: Sala de estar
+            features:
+              - type: target-temperature
+              - type: climate-hvac-modes
+                hvac_modes:
+                  - 'off'
+                  - cool
+                  - heat
+                  - auto
+                  - dry
+                  - fan_only
+              - type: climate-fan-modes
+          - type: tile
+            entity: climate.c62db069
+            name: Cozinha
+            features:
+              - type: target-temperature
+              - type: climate-hvac-modes
+                hvac_modes:
+                  - 'off'
+                  - cool
+                  - heat
+                  - auto
+                  - dry
+                  - fan_only
+              - type: climate-fan-modes
+          - type: tile
+            entity: climate.c63fd170
+            name: Office
+            features:
+              - type: target-temperature
+              - type: climate-hvac-modes
+                hvac_modes:
+                  - 'off'
+                  - cool
+                  - heat
+                  - auto
+                  - dry
+                  - fan_only
+              - type: climate-fan-modes
+          - type: tile
+            entity: climate.c640155f
+            name: Suite Master
+            features:
+              - type: target-temperature
+              - type: climate-hvac-modes
+                hvac_modes:
+                  - 'off'
+                  - cool
+                  - heat
+                  - auto
+                  - dry
+                  - fan_only
+              - type: climate-fan-modes
+          - type: tile
+            entity: climate.c64015c4
+            name: Quarto Crianças
+            features:
+              - type: target-temperature
+              - type: climate-hvac-modes
+                hvac_modes:
+                  - 'off'
+                  - cool
+                  - heat
+                  - auto
+                  - dry
+                  - fan_only
+              - type: climate-fan-modes

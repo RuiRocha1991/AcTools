@@ -11,9 +11,10 @@ Os AC Toyotomi com a app EWPE Smart usam o protocolo Gree. A integração nativa
 | Ficheiro | Onde vai no HA | Conteúdo |
 |---|---|---|
 | `configuration.yaml` | `/homeassistant/configuration.yaml` (= `/config`) | sensores template de temperatura, setpoint, modo, ventilador e temperatura exterior (15 min), `recorder` (800 dias) e `shell_command` para o CSV |
-| `dashboards/ar_condicionado.yaml` | novo painel (raw configuration editor) | gráfico de temperaturas, controlo por unidade (modo, ventilador, setpoint), resumo e temperaturas atuais (só cartões nativos) |
-| `dashboards/ar_condicionado_apexcharts.yaml` | idem (alternativa) | igual, mas com gráfico apexcharts que mostra também os setpoints a tracejado (requer HACS) |
-| `automations.yaml` | acrescentar a `/homeassistant/automations.yaml` | automação que escreve 5 linhas (uma por unidade) no CSV a cada 15 min |
+| `dashboards/ar_condicionado.yaml` | novo painel (editor de configuração em bruto) | painel principal: gráfico apexcharts (largura total) + 5 cartões de controlo dos AC |
+| `dashboards/ar_condicionado_nativo.yaml` | idem (alternativa) | variante só com cartões nativos (sem apexcharts-card), com resumo e temperaturas atuais |
+| `dashboards/resumo_tabela.yaml` | cartão extra (opcional) | cartão Markdown "Resumo" em tabela única (Unidade, Estado e modo, Ventilador) |
+| `automations.yaml` | acrescentar a `/homeassistant/automations.yaml` | automação que escreve 6 linhas (5 unidades + exterior) no CSV a cada 15 min |
 
 ## Unidades
 
@@ -45,25 +46,40 @@ Os IDs `climate.*` são específicos desta instalação. Noutra instalação, v�
 4. Acrescentar a automação de `automations.yaml` ao ficheiro do HA.
 5. *Ferramentas de programador → YAML → Verificar configuração* e depois **Reiniciar** o HA.
 6. Testar o CSV sem esperar 15 min: *Ferramentas de programador → Ações →*
-   `shell_command.append_temperaturas_csv`. Deve aparecer `/config/temperaturas.csv` com 5 linhas.
+   `shell_command.append_temperaturas_csv`. Deve aparecer `/config/temperaturas.csv` com o cabeçalho e 6 linhas (5 unidades + exterior).
 
 ## Dashboard
 
 `dashboards/ar_condicionado.yaml`: *Definições → Painéis → Adicionar painel*, abrir, ✏️ *Editar* →
-⋮ → *Editor de configuração em bruto* e colar o ficheiro.
+⋮ → *Editor de configuração em bruto*, selecionar tudo (Ctrl+A) e colar o ficheiro.
 
-- `ar_condicionado.yaml` usa só cartões nativos (`history-graph`). A variante
-  `ar_condicionado_apexcharts.yaml` precisa do `apexcharts-card` (HACS → Frontend);
-  sem ele o primeiro cartão mostra "Erro de configuração".
-- Os painéis usam a vista **Secções**: o gráfico ocupa a largura total no topo, seguido das unidades,
-  do resumo e das temperaturas atuais.
-- Os cartões por unidade usam `tile` com controlo de setpoint, modo e ventilador
-  (requer um HA recente, 2024.9+).
+- Vista **Secções**: o gráfico ocupa a largura total no topo (`section_mode: true`, `rows: 4`) e por
+  baixo ficam os 5 cartões `tile` com setpoint, modo e ventilador (requer HA 2024.9+).
+- O eixo Y do gráfico é automático, alinhado a múltiplos de 5 (`align_to: 5`, `stepSize: 5`). Para
+  mudar a altura, alterar `rows`.
+- Os setpoints aparecem a tracejado, na cor da unidade e fora da legenda.
+- Sem o `apexcharts-card` o primeiro cartão mostra "Erro de configuração". Alternativa sem cartões
+  custom: `ar_condicionado_nativo.yaml`.
 - Depende dos sensores criados em `configuration.yaml`. Os sensores template com trigger
   ficam "Desconhecido" até à **próxima passagem por :00/:15/:30/:45** depois de criados
-  ou de um reinício; os que já existiam recuperam o valor anterior.
+  ou de um reinício (ou até se disparar o evento `ac_amostra`).
 - A entidade do Met.no chama-se normalmente `weather.forecast_<nome>` (ex.: `weather.forecast_casa`).
   Se aparecer "Entidade não encontrada", confirmar o ID em *Estados* (filtro `weather.`).
+- `resumo_tabela.yaml` é um cartão extra (não incluído no painel principal).
+
+### Instalar o apexcharts-card (sem HACS)
+
+Num Raspberry Pi 3 a instalação do HACS pode reiniciar o Pi (pouca RAM). O cartão instala-se à mão:
+
+1. No add-on *Terminal & SSH*:
+   ```
+   mkdir -p /config/www
+   wget -O /config/www/apexcharts-card.js https://github.com/RomRider/apexcharts-card/releases/latest/download/apexcharts-card.js
+   ```
+2. Reiniciar o HA (a pasta `www` é nova).
+3. Ativar o **Modo avançado** (perfil do utilizador) e em *Definições → Painéis → ⋮ → Recursos*
+   adicionar `/local/apexcharts-card.js` como **Módulo JavaScript**.
+4. Recarregar o browser com Ctrl+Shift+R.
 
 ## Como funciona
 
@@ -117,6 +133,8 @@ data,unidade,temperatura,setpoint,modo,ligado,ventilador
 - **"serviço desconhecido: shell_command.append_temperaturas_csv"**: o bloco `shell_command:` não
   foi carregado. Confirmar que está no `configuration.yaml` (uma só vez, sem indentação), que a
   verificação de configuração passa e que o HA foi **reiniciado** (recarregar YAML não chega).
+- **"No closing quotation" (`ValueError`) ao executar o comando:** falta a aspa simples `'` que fecha o
+  `sh -c '...'`, a última linha do bloco `shell_command` (4 espaços e `'`). É o erro mais comum ao copiar o bloco.
 - **Como saber se o serviço existe:** *Ferramentas de programador → Ações*, escrever `shell_command`.
   Deve aparecer `shell_command.append_temperaturas_csv`.
 - **"Não existe a pasta /config":** nos add-ons (File editor, Terminal & SSH) a pasta de configuração
@@ -124,7 +142,8 @@ data,unidade,temperatura,setpoint,modo,ligado,ventilador
   o CSV criado em `/config/temperaturas.csv` aparece no File editor como `temperaturas.csv`, ao lado do
   `configuration.yaml`.
 - **Teste mínimo** (isola o problema): acrescentar `teste_shell: 'echo ok > /config/teste.txt'` em
-  `shell_command:`, reiniciar, chamar `shell_command.teste_shell` e ver se aparece `teste.txt`.
+  `shell_command:`, recarregar (`shell_command.reload`), chamar `shell_command.teste_shell` e ver se aparece `teste.txt`.
+- O caminho do ficheiro tem de ser `f=/config/temperaturas.csv` (e não `/temperaturas.csv`, que fica fora da pasta de configuração).
 - **Sensores template "unknown" / sem o atributo `amostra`:** o template com trigger nunca correu.
   O trigger inclui o arranque do HA e o evento manual `ac_amostra` (*Ferramentas de programador →
   Eventos → Disparar evento*). Depois de alterar `template:`, usar a ação `template.reload`

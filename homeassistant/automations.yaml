@@ -3,11 +3,11 @@
 # Se o ficheiro já tiver automações, junta este item à lista existente.
 - id: guardar_temperaturas_csv
   alias: Guardar temperaturas CSV
-  description: Acrescenta ao /config/temperaturas.csv uma linha por unidade de 15 em 15 minutos
+  description: Acrescenta ao /config/temperaturas.csv uma linha por unidade (e uma do exterior) de 15 em 15 minutos
   mode: single
-  trigger:
-    - platform: time_pattern
+  triggers:
+    - trigger: time_pattern
       minutes: "/15"
-      seconds: 30 # depois de os sensores template atualizarem (segundo 0)
-  action:
-    - service: shell_command.append_temperaturas_csv
+      seconds: "30" # depois de os sensores template atualizarem (segundo 0)
+  actions:
+    - action: shell_command.append_temperaturas_csv
