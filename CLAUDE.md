@@ -61,7 +61,7 @@ Não existe código aplicacional: o repositório contém **configuração YAML d
 | `homeassistant/configuration.yaml` | `/homeassistant/configuration.yaml` (= `/config`) | 2 `shell_command` (CSV), sensores template (AC 15 min; tomada 5 min), `integration` + `utility_meter` (energia do office), `recorder` |
 | `homeassistant/automations.yaml` | acrescentar a `automations.yaml` do HA | `Guardar temperaturas CSV` (aos 30 s de cada quarto de hora) e `Guardar consumos do office CSV` (aos XX:00:30) |
 | `homeassistant/dashboards/ar_condicionado.yaml` | Painéis > novo painel > editor de configuração em bruto | **painel principal**: gráfico apexcharts + 5 cartões dos AC |
-| `homeassistant/dashboards/office.yaml` | idem | painel do **office**: consumos/controlo da tomada + AC do office |
+| `homeassistant/dashboards/office.yaml` | idem | painel do **office**: RACK (tomada Office UPS), AC do office e NAS (versão final do utilizador) |
 | `homeassistant/dashboards/ar_condicionado_nativo.yaml` | idem | variante só com cartões nativos (sem apexcharts-card) |
 | `homeassistant/dashboards/resumo_tabela.yaml` | cartão extra | tabela "Resumo" (Unidade, Estado e modo, Ventilador) |
 | `homeassistant/README.md` | | instalação, funcionamento, resolução de problemas |
@@ -82,6 +82,8 @@ Não existe código aplicacional: o repositório contém **configuração YAML d
   `sensor.office_ups_potencia` (W), `_tensao` (V), `_corrente` (A), `_energia_total` (kWh, resolução 0,01).
   Criados por nós: `sensor.office_tomada_potencia|tensao|corrente` (amostras de 5 min),
   `sensor.office_energia_calculada` (integração da potência), `sensor.office_energia_hora|dia|mes` (utility meters).
+- **NAS Office (QNAP TS-233)**: `sensor.lr_nas_office_estado`, `_temperatura_do_cpu`, `_temperatura_do_sistema`,
+  `_utilizacao_de_memoria`, `_utilizacao_do_cpu`, `_volume_utilizado_pc_backups|photos|users_default_data`.
 - CSV do office: `/config/office_consumos.csv` com
   `hora_inicio,energia_hora_kwh,potencia_w,tensao_v,corrente_a,energia_total_kwh,tomada`,
   uma linha por hora fechada. **Só dados da tomada: sem AC nem temperatura exterior** (decisão do utilizador).
@@ -119,6 +121,9 @@ Não existe código aplicacional: o repositório contém **configuração YAML d
 - Energia por hora: o contador da tomada tem resolução de 0,01 kWh; usar `integration` (Riemann, `max_sub_interval`)
   + `utility_meter`. O CSV horário escreve o `last_period` do utility meter aos XX:00:30 (a hora que acabou).
 - O `recorder.include` é restritivo: **qualquer entidade nova que se queira no histórico/gráficos tem de ser acrescentada lá**.
+- Dashboards: colar no **editor da vista** só o conteúdo de uma vista (`type: sections`, ...); no **editor em bruto** do dashboard,
+  `title:` + `views:` (substitui todas as vistas). `path` tem de ser **único** entre as vistas ("mesmo URL que uma vista existente").
+  `grid_options` em `vertical-stack` nem sempre é respeitado; num `grid` (`columns: N`, `square: false`) as colunas são iguais.
 - O Pi 3 não deve correr MongoDB; se for preciso uma base de dados, usar uma máquina externa.
 
 ## Idioma e estilo

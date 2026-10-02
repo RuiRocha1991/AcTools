@@ -1,123 +1,161 @@
-# Dashboard "Office": consumos da tomada (Office UPS) + ar condicionado do office
-# Vista "Secções": gráfico da potência em cima; consumos e controlo da tomada; AC do office; consumo por hora e por dia.
+# Dashboard "Office": RACK (tomada Office UPS: dados, controlos, consumos), AC do office e NAS
+# Vista "Secções" (versão do utilizador, igual à que está no Home Assistant).
 #
 # Requer o cartão "apexcharts-card" (ver README) e a configuração de configuration.yaml
-# (sensores office_tomada_*, office_energia_* e utility_meter).
+# (sensores office_tomada_*, office_energia_* e utility_meter). Os sensores lr_nas_office_*
+# vêm da integração QNAP (activar as entidades desativadas que se queiram usar).
 #
 # Como usar: Definições > Painéis > Adicionar painel > (abrir) > ✏️ Editar >
-# ⋮ > Editor de configuração em bruto > colar este ficheiro.
+# ⋮ > Editor de configuração em bruto > colar este ficheiro (substitui todas as vistas desse painel).
 title: Office
 views:
-  - title: Office
+  - type: sections
+    title: Office
     path: office
     icon: mdi:desk
-    type: sections
     max_columns: 4
     sections:
       - type: grid
         column_span: 4
         cards:
-          - type: custom:apexcharts-card
-            section_mode: true
+          - type: vertical-stack
             grid_options:
-              columns: full
-              rows: 5
-            header:
-              show: true
-              title: Potência da tomada (W)
-              show_states: false
-            graph_span: 1d
-            update_interval: 5min
-            chart_type: line
-            apex_config:
-              chart:
-                zoom:
-                  enabled: true
-                  type: x
-                  autoScaleYaxis: true
-                  allowMouseWheelZoom: true
-                toolbar:
+              columns: 7
+            cards:
+              - type: heading
+                heading: RACK · Dados
+                icon: mdi:flash
+                heading_style: title
+              - type: tile
+                entity: sensor.office_ups_potencia
+                name: Potência agora
+                icon: mdi:flash
+              - type: tile
+                entity: sensor.office_ups_tensao
+                name: Tensão
+                icon: mdi:sine-wave
+              - type: tile
+                entity: sensor.office_ups_corrente
+                name: Corrente
+                icon: mdi:current-ac
+              - type: tile
+                entity: sensor.office_energia_dia
+                name: Energia hoje
+                icon: mdi:calendar-today
+              - type: tile
+                entity: sensor.office_energia_mes
+                name: Energia do mês
+                icon: mdi:calendar-month
+              - type: tile
+                entity: sensor.office_ups_energia_total
+                name: Energia total (contador)
+                icon: mdi:counter
+          - type: vertical-stack
+            grid_options:
+              columns: 10
+            cards:
+              - type: heading
+                heading: RACK · Controlos
+                icon: mdi:power-socket-eu
+                heading_style: title
+              - type: tile
+                entity: switch.office_ups_tomada_1
+                name: Tomada 1
+                icon: mdi:power-socket-eu
+                features:
+                  - type: toggle
+              - type: entities
+                title: Definições da tomada
+                show_header_toggle: false
+                entities:
+                  - entity: switch.office_ups_bloqueio_para_criancas
+                    name: Bloqueio para crianças
+                  - entity: select.office_ups_comportamento_de_arranque
+                    name: Comportamento de arranque
+                  - entity: select.office_ups_modo_de_luz_indicadora
+                    name: Modo de luz indicadora
+          - type: vertical-stack
+            grid_options:
+              columns: 31
+            cards:
+              - type: heading
+                heading: RACK · Consumos
+                icon: mdi:power-socket-eu
+                heading_style: title
+              - type: custom:apexcharts-card
+                section_mode: true
+                grid_options:
+                  columns: full
+                  rows: 3
+                header:
                   show: true
-                  autoSelected: pan
-                  tools:
-                    download: false
-                    selection: false
-                    zoom: true
-                    zoomin: true
-                    zoomout: true
-                    pan: true
-                    reset: true
-              legend:
-                position: top
-                horizontalAlign: left
-              xaxis:
-                labels:
-                  datetimeUTC: false
-            yaxis:
-              - decimals: 0
-            series:
-              - entity: sensor.office_tomada_potencia
-                name: Potência
-                color: '#f59e0b'
-                stroke_width: 2
+                  title: Consumo por hora (kWh, últimas 48 h)
+                  show_states: false
+                graph_span: 2d
+                update_interval: 15min
+                chart_type: line
+                apex_config:
+                  legend:
+                    position: top
+                    horizontalAlign: left
+                  xaxis:
+                    labels:
+                      datetimeUTC: false
+                yaxis:
+                  - decimals: 2
+                    min: 0
+                series:
+                  - entity: sensor.office_energia_calculada
+                    name: Energia por hora
+                    type: column
+                    color: '#10b981'
+                    float_precision: 3
+                    statistics:
+                      type: change
+                      period: hour
+                      align: start
+              - type: custom:apexcharts-card
+                section_mode: true
+                grid_options:
+                  columns: full
+                  rows: 3
+                header:
+                  show: true
+                  title: Consumo por dia (kWh, últimos 30 dias)
+                  show_states: false
+                graph_span: 30d
+                update_interval: 15min
+                chart_type: line
+                apex_config:
+                  legend:
+                    position: top
+                    horizontalAlign: left
+                  xaxis:
+                    labels:
+                      datetimeUTC: false
+                yaxis:
+                  - decimals: 2
+                    min: 0
+                series:
+                  - entity: sensor.office_energia_calculada
+                    name: Energia por dia
+                    type: column
+                    color: '#3b82f6'
+                    float_precision: 2
+                    statistics:
+                      type: change
+                      period: day
+                      align: start
       - type: grid
-        column_span: 2
+        column_span: 4
         cards:
           - type: heading
-            heading: Consumo da tomada
-            icon: mdi:flash
-          - type: tile
-            entity: sensor.office_ups_potencia
-            name: Potência agora
-            icon: mdi:flash
-          - type: tile
-            entity: sensor.office_ups_tensao
-            name: Tensão
-            icon: mdi:sine-wave
-          - type: tile
-            entity: sensor.office_ups_corrente
-            name: Corrente
-            icon: mdi:current-ac
-          - type: tile
-            entity: sensor.office_energia_dia
-            name: Energia hoje
-            icon: mdi:calendar-today
-          - type: tile
-            entity: sensor.office_energia_mes
-            name: Energia este mês
-            icon: mdi:calendar-month
-          - type: tile
-            entity: sensor.office_ups_energia_total
-            name: Energia total (contador)
-            icon: mdi:counter
-          - type: heading
-            heading: Controlo da tomada
-            icon: mdi:power-socket-eu
-          - type: tile
-            entity: switch.office_ups_tomada_1
-            name: Tomada 1
-            icon: mdi:power-socket-eu
-            features:
-              - type: toggle
-          - type: entities
-            title: Definições da tomada
-            show_header_toggle: false
-            entities:
-              - entity: switch.office_ups_bloqueio_para_criancas
-                name: Bloqueio para crianças
-              - entity: select.office_ups_comportamento_de_arranque
-                name: Comportamento de arranque
-              - entity: select.office_ups_modo_de_luz_indicadora
-                name: Modo de luz indicadora
-      - type: grid
-        column_span: 2
-        cards:
-          - type: heading
-            heading: Ar condicionado do office
-            icon: mdi:air-conditioner
+            heading: AC - Controlor
           - type: tile
             entity: climate.c63fd170
             name: Office
+            grid_options:
+              columns: 8
             features:
               - type: target-temperature
               - type: climate-hvac-modes
@@ -132,7 +170,7 @@ views:
           - type: custom:apexcharts-card
             section_mode: true
             grid_options:
-              columns: full
+              columns: 40
               rows: 4
             header:
               show: true
@@ -187,72 +225,34 @@ views:
                 color: '#f97316'
                 stroke_width: 3
       - type: grid
-        column_span: 2
         cards:
-          - type: custom:apexcharts-card
-            section_mode: true
-            grid_options:
-              columns: full
-              rows: 5
-            header:
-              show: true
-              title: Consumo por hora (kWh, últimas 48 h)
-              show_states: false
-            graph_span: 2d
-            update_interval: 15min
-            chart_type: line
-            apex_config:
-              legend:
-                position: top
-                horizontalAlign: left
-              xaxis:
-                labels:
-                  datetimeUTC: false
-            yaxis:
-              - decimals: 2
-                min: 0
-            series:
-              - entity: sensor.office_energia_calculada
-                name: Energia por hora
-                type: column
-                color: '#10b981'
-                float_precision: 3
-                statistics:
-                  type: change
-                  period: hour
-                  align: start
-      - type: grid
-        column_span: 2
-        cards:
-          - type: custom:apexcharts-card
-            section_mode: true
-            grid_options:
-              columns: full
-              rows: 5
-            header:
-              show: true
-              title: Consumo por dia (kWh, últimos 30 dias)
-              show_states: false
-            graph_span: 30d
-            update_interval: 15min
-            chart_type: line
-            apex_config:
-              legend:
-                position: top
-                horizontalAlign: left
-              xaxis:
-                labels:
-                  datetimeUTC: false
-            yaxis:
-              - decimals: 2
-                min: 0
-            series:
-              - entity: sensor.office_energia_calculada
-                name: Energia por dia
-                type: column
-                color: '#3b82f6'
-                float_precision: 2
-                statistics:
-                  type: change
-                  period: day
-                  align: start
+          - type: heading
+            heading: NAS - Office
+          - type: tile
+            entity: sensor.lr_nas_office_estado
+            name: Estado
+            vertical: false
+            features_position: bottom
+          - type: tile
+            name: Temperatura CPU
+            entity: sensor.lr_nas_office_temperatura_do_cpu
+          - type: tile
+            name: Temperatura Sistema
+            entity: sensor.lr_nas_office_temperatura_do_sistema
+          - type: tile
+            name: Memoria %
+            entity: sensor.lr_nas_office_utilizacao_de_memoria
+          - type: tile
+            name: CPU %
+            entity: sensor.lr_nas_office_utilizacao_do_cpu
+          - type: tile
+            name: Disco Backups %
+            entity: sensor.lr_nas_office_volume_utilizado_pc_backups
+          - type: tile
+            name: Disco Photos %
+            entity: sensor.lr_nas_office_volume_utilizado_photos
+          - type: tile
+            name: Disco Users %
+            entity: sensor.lr_nas_office_volume_utilizado_users_default_data
+        column_span: 4
+    cards: []

@@ -14,7 +14,7 @@ Os AC Toyotomi com a app EWPE Smart usam o protocolo Gree. A integração nativa
 | `dashboards/ar_condicionado.yaml` | novo painel (editor de configuração em bruto) | painel principal: gráfico apexcharts (largura total) + 5 cartões de controlo dos AC |
 | `dashboards/ar_condicionado_nativo.yaml` | idem (alternativa) | variante só com cartões nativos (sem apexcharts-card), com resumo e temperaturas atuais |
 | `dashboards/resumo_tabela.yaml` | cartão extra (opcional) | cartão Markdown "Resumo" em tabela única (Unidade, Estado e modo, Ventilador) |
-| `dashboards/office.yaml` | novo painel (editor de configuração em bruto) | painel do office: consumos e controlo da tomada (Office UPS) + AC do office |
+| `dashboards/office.yaml` | novo painel (editor de configuração em bruto) | painel do office (versão final do utilizador): RACK (dados, controlos e consumos da tomada), AC do office e NAS |
 | `automations.yaml` | acrescentar a `/homeassistant/automations.yaml` | 2 automações: CSV das temperaturas (15 min) e CSV dos consumos do office (de hora a hora) |
 
 ## Unidades
@@ -88,13 +88,22 @@ Num Raspberry Pi 3 a instalação do HACS pode reiniciar o Pi (pouca RAM). O car
 
 ## Office: tomada inteligente (Office UPS) + AC
 
-Painel `dashboards/office.yaml`: potência em tempo real, tensão, corrente, energia de hoje/do mês/total, controlo da
-tomada (ligar/desligar, bloqueio para crianças, arranque, luz) e o AC do office com a temperatura.
+Painel `dashboards/office.yaml` (vista Secções, igual ao que está no HA):
+
+- **RACK · Dados / Controlos / Consumos** (largura total): potência, tensão, corrente, energia hoje/mês/total; ligar/desligar a
+  tomada, bloqueio para crianças, arranque e luz; gráficos de consumo por hora (48 h) e por dia (30 dias).
+- **AC - Controlor**: tile do AC do office e gráfico da temperatura (com zoom).
+- **NAS - Office**: estado, temperaturas, memória, CPU e ocupação dos volumes da NAS QNAP.
 
 **Entidades da tomada (reais):** `switch.office_ups_tomada_1`, `switch.office_ups_bloqueio_para_criancas`,
 `select.office_ups_comportamento_de_arranque`, `select.office_ups_modo_de_luz_indicadora`,
 `sensor.office_ups_potencia` (W), `sensor.office_ups_tensao` (V), `sensor.office_ups_corrente` (A),
 `sensor.office_ups_energia_total` (kWh, contador com resolução de 0,01).
+
+**NAS (QNAP TS-233, integração QNAP):** `sensor.lr_nas_office_estado`, `_temperatura_do_cpu`, `_temperatura_do_sistema`,
+`_utilizacao_de_memoria`, `_utilizacao_do_cpu`, `_volume_utilizado_pc_backups`, `_volume_utilizado_photos`,
+`_volume_utilizado_users_default_data`. Alguns vêm **desativados** por defeito (ex.: temperaturas): ativar em
+*Definições → Dispositivos e serviços → Entidades → Mostrar desativadas*. Não ficam no `recorder`.
 
 **Criadas em `configuration.yaml`:**
 
