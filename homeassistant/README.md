@@ -53,10 +53,14 @@ Os IDs `climate.*` são específicos desta instalação. Noutra instalação, v�
 `dashboards/ar_condicionado.yaml`: *Definições → Painéis → Adicionar painel*, abrir, ✏️ *Editar* →
 ⋮ → *Editor de configuração em bruto*, selecionar tudo (Ctrl+A) e colar o ficheiro.
 
-- Vista **Secções**: o gráfico ocupa a largura total no topo (`section_mode: true`, `rows: 4`) e por
+- Vista **Secções**: o gráfico ocupa a largura total no topo (`section_mode: true`, `rows: 7`) e por
   baixo ficam os 5 cartões `tile` com setpoint, modo e ventilador (requer HA 2024.9+).
 - O eixo Y do gráfico é automático, alinhado a múltiplos de 5 (`align_to: 5`, `stepSize: 5`). Para
-  mudar a altura, alterar `rows`.
+  mudar a altura, alterar `rows` (cada unidade ≈ 1,7 cm).
+- **Zoom:** a roda do rato aproxima/afasta no tempo e o eixo Y reajusta-se (`autoScaleYaxis`); arrastar
+  desloca o gráfico; a barra de ferramentas (lupas, mão, *reset*) fica à direita e a legenda à esquerda.
+  A roda do rato captura o scroll da página sobre o gráfico (`allowMouseWheelZoom: false` desliga).
+  Com dados novos o gráfico pode voltar à vista completa (`update_interval: 15min` reduz isso).
 - Os setpoints aparecem a tracejado, na cor da unidade e fora da legenda.
 - Sem o `apexcharts-card` o primeiro cartão mostra "Erro de configuração". Alternativa sem cartões
   custom: `ar_condicionado_nativo.yaml`.

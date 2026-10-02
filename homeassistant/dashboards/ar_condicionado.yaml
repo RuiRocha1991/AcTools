@@ -21,18 +21,35 @@ views:
             section_mode: true
             grid_options:
               columns: full
-              rows: 4
+              rows: 7
             header:
               show: true
               title: Temperaturas
               show_states: false
             graph_span: 1d
-            update_interval: 5min
+            update_interval: 15min
             chart_type: line
             apex_config:
+              chart:
+                zoom:
+                  enabled: true
+                  type: x
+                  autoScaleYaxis: true
+                  allowMouseWheelZoom: true
+                toolbar:
+                  show: true
+                  autoSelected: pan
+                  tools:
+                    download: false
+                    selection: false
+                    zoom: true
+                    zoomin: true
+                    zoomout: true
+                    pan: true
+                    reset: true
               legend:
                 position: top
-                horizontalAlign: right
+                horizontalAlign: left
               xaxis:
                 labels:
                   datetimeUTC: false
