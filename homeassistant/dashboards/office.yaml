@@ -1,0 +1,258 @@
+# Dashboard "Office": consumos da tomada (Office UPS) + ar condicionado do office
+# Vista "Secções": gráfico da potência em cima; consumos e controlo da tomada; AC do office; consumo por hora e por dia.
+#
+# Requer o cartão "apexcharts-card" (ver README) e a configuração de configuration.yaml
+# (sensores office_tomada_*, office_energia_* e utility_meter).
+#
+# Como usar: Definições > Painéis > Adicionar painel > (abrir) > ✏️ Editar >
+# ⋮ > Editor de configuração em bruto > colar este ficheiro.
+title: Office
+views:
+  - title: Office
+    path: office
+    icon: mdi:desk
+    type: sections
+    max_columns: 4
+    sections:
+      - type: grid
+        column_span: 4
+        cards:
+          - type: custom:apexcharts-card
+            section_mode: true
+            grid_options:
+              columns: full
+              rows: 5
+            header:
+              show: true
+              title: Potência da tomada (W)
+              show_states: false
+            graph_span: 1d
+            update_interval: 5min
+            chart_type: line
+            apex_config:
+              chart:
+                zoom:
+                  enabled: true
+                  type: x
+                  autoScaleYaxis: true
+                  allowMouseWheelZoom: true
+                toolbar:
+                  show: true
+                  autoSelected: pan
+                  tools:
+                    download: false
+                    selection: false
+                    zoom: true
+                    zoomin: true
+                    zoomout: true
+                    pan: true
+                    reset: true
+              legend:
+                position: top
+                horizontalAlign: left
+              xaxis:
+                labels:
+                  datetimeUTC: false
+            yaxis:
+              - decimals: 0
+            series:
+              - entity: sensor.office_tomada_potencia
+                name: Potência
+                color: '#f59e0b'
+                stroke_width: 2
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: Consumo da tomada
+            icon: mdi:flash
+          - type: tile
+            entity: sensor.office_ups_potencia
+            name: Potência agora
+            icon: mdi:flash
+          - type: tile
+            entity: sensor.office_ups_tensao
+            name: Tensão
+            icon: mdi:sine-wave
+          - type: tile
+            entity: sensor.office_ups_corrente
+            name: Corrente
+            icon: mdi:current-ac
+          - type: tile
+            entity: sensor.office_energia_dia
+            name: Energia hoje
+            icon: mdi:calendar-today
+          - type: tile
+            entity: sensor.office_energia_mes
+            name: Energia este mês
+            icon: mdi:calendar-month
+          - type: tile
+            entity: sensor.office_ups_energia_total
+            name: Energia total (contador)
+            icon: mdi:counter
+          - type: heading
+            heading: Controlo da tomada
+            icon: mdi:power-socket-eu
+          - type: tile
+            entity: switch.office_ups_tomada_1
+            name: Tomada 1
+            icon: mdi:power-socket-eu
+            features:
+              - type: toggle
+          - type: entities
+            title: Definições da tomada
+            show_header_toggle: false
+            entities:
+              - entity: switch.office_ups_bloqueio_para_criancas
+                name: Bloqueio para crianças
+              - entity: select.office_ups_comportamento_de_arranque
+                name: Comportamento de arranque
+              - entity: select.office_ups_modo_de_luz_indicadora
+                name: Modo de luz indicadora
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: Ar condicionado do office
+            icon: mdi:air-conditioner
+          - type: tile
+            entity: climate.c63fd170
+            name: Office
+            features:
+              - type: target-temperature
+              - type: climate-hvac-modes
+                hvac_modes:
+                  - 'off'
+                  - cool
+                  - heat
+                  - auto
+                  - dry
+                  - fan_only
+              - type: climate-fan-modes
+          - type: custom:apexcharts-card
+            section_mode: true
+            grid_options:
+              columns: full
+              rows: 4
+            header:
+              show: true
+              title: Temperatura do office
+              show_states: false
+            graph_span: 1d
+            update_interval: 15min
+            chart_type: line
+            apex_config:
+              chart:
+                zoom:
+                  enabled: true
+                  type: x
+                  autoScaleYaxis: true
+                  allowMouseWheelZoom: true
+                toolbar:
+                  show: true
+                  autoSelected: pan
+                  tools:
+                    download: false
+                    selection: false
+                    zoom: true
+                    zoomin: true
+                    zoomout: true
+                    pan: true
+                    reset: true
+              legend:
+                position: top
+                horizontalAlign: left
+              xaxis:
+                labels:
+                  datetimeUTC: false
+            yaxis:
+              - decimals: 0
+                align_to: 5
+                apex_config:
+                  stepSize: 5
+            series:
+              - entity: sensor.ac_office_temperatura
+                name: Office
+                color: '#a855f7'
+                stroke_width: 2
+              - entity: sensor.ac_office_setpoint
+                name: Setpoint
+                color: '#a855f7'
+                stroke_width: 1
+                stroke_dash: 4
+                show:
+                  in_legend: false
+              - entity: sensor.temperatura_exterior
+                name: Exterior
+                color: '#f97316'
+                stroke_width: 3
+      - type: grid
+        column_span: 2
+        cards:
+          - type: custom:apexcharts-card
+            section_mode: true
+            grid_options:
+              columns: full
+              rows: 5
+            header:
+              show: true
+              title: Consumo por hora (kWh, últimas 48 h)
+              show_states: false
+            graph_span: 2d
+            update_interval: 15min
+            chart_type: line
+            apex_config:
+              legend:
+                position: top
+                horizontalAlign: left
+              xaxis:
+                labels:
+                  datetimeUTC: false
+            yaxis:
+              - decimals: 2
+                min: 0
+            series:
+              - entity: sensor.office_energia_calculada
+                name: Energia por hora
+                type: column
+                color: '#10b981'
+                float_precision: 3
+                statistics:
+                  type: change
+                  period: hour
+                  align: start
+      - type: grid
+        column_span: 2
+        cards:
+          - type: custom:apexcharts-card
+            section_mode: true
+            grid_options:
+              columns: full
+              rows: 5
+            header:
+              show: true
+              title: Consumo por dia (kWh, últimos 30 dias)
+              show_states: false
+            graph_span: 30d
+            update_interval: 15min
+            chart_type: line
+            apex_config:
+              legend:
+                position: top
+                horizontalAlign: left
+              xaxis:
+                labels:
+                  datetimeUTC: false
+            yaxis:
+              - decimals: 2
+                min: 0
+            series:
+              - entity: sensor.office_energia_calculada
+                name: Energia por dia
+                type: column
+                color: '#3b82f6'
+                float_precision: 2
+                statistics:
+                  type: change
+                  period: day
+                  align: start

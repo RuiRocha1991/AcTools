@@ -10,11 +10,12 @@ Os AC Toyotomi com a app EWPE Smart usam o protocolo Gree. A integração nativa
 
 | Ficheiro | Onde vai no HA | Conteúdo |
 |---|---|---|
-| `configuration.yaml` | `/homeassistant/configuration.yaml` (= `/config`) | sensores template de temperatura, setpoint, modo, ventilador e temperatura exterior (15 min), `recorder` (800 dias) e `shell_command` para o CSV |
+| `configuration.yaml` | `/homeassistant/configuration.yaml` (= `/config`) | sensores template de temperatura, setpoint, modo, ventilador e temperatura exterior (15 min), tomada do office (5 min), integração/utility meters de energia, `recorder` (800 dias) e `shell_command` para os 2 CSV |
 | `dashboards/ar_condicionado.yaml` | novo painel (editor de configuração em bruto) | painel principal: gráfico apexcharts (largura total) + 5 cartões de controlo dos AC |
 | `dashboards/ar_condicionado_nativo.yaml` | idem (alternativa) | variante só com cartões nativos (sem apexcharts-card), com resumo e temperaturas atuais |
 | `dashboards/resumo_tabela.yaml` | cartão extra (opcional) | cartão Markdown "Resumo" em tabela única (Unidade, Estado e modo, Ventilador) |
-| `automations.yaml` | acrescentar a `/homeassistant/automations.yaml` | automação que escreve 6 linhas (5 unidades + exterior) no CSV a cada 15 min |
+| `dashboards/office.yaml` | novo painel (editor de configuração em bruto) | painel do office: consumos e controlo da tomada (Office UPS) + AC do office |
+| `automations.yaml` | acrescentar a `/homeassistant/automations.yaml` | 2 automações: CSV das temperaturas (15 min) e CSV dos consumos do office (de hora a hora) |
 
 ## Unidades
 
@@ -85,6 +86,36 @@ Num Raspberry Pi 3 a instalação do HACS pode reiniciar o Pi (pouca RAM). O car
    adicionar `/local/apexcharts-card.js` como **Módulo JavaScript**.
 4. Recarregar o browser com Ctrl+Shift+R.
 
+## Office: tomada inteligente (Office UPS) + AC
+
+Painel `dashboards/office.yaml`: potência em tempo real, tensão, corrente, energia de hoje/do mês/total, controlo da
+tomada (ligar/desligar, bloqueio para crianças, arranque, luz) e o AC do office com a temperatura.
+
+**Entidades da tomada (reais):** `switch.office_ups_tomada_1`, `switch.office_ups_bloqueio_para_criancas`,
+`select.office_ups_comportamento_de_arranque`, `select.office_ups_modo_de_luz_indicadora`,
+`sensor.office_ups_potencia` (W), `sensor.office_ups_tensao` (V), `sensor.office_ups_corrente` (A),
+`sensor.office_ups_energia_total` (kWh, contador com resolução de 0,01).
+
+**Criadas em `configuration.yaml`:**
+
+| Entidade | O que é |
+|---|---|
+| `sensor.office_tomada_potencia`, `_tensao`, `_corrente` | amostras de **5 em 5 min** dos sensores da tomada (ficam no histórico; o sensor original atualiza a cada poucos segundos e encheria o cartão SD) |
+| `sensor.office_energia_calculada` | energia (kWh, 3 casas) calculada por integração da potência; o contador da tomada é demasiado grosseiro para consumos por hora |
+| `sensor.office_energia_hora`, `_dia`, `_mes` | `utility_meter`: consumo da hora/dia/mês atual (reiniciam no fim do período; o atributo `last_period` guarda o período anterior) |
+
+**CSV horário `/config/office_consumos.csv`** (automação aos XX:00:30, uma linha por hora **fechada**):
+
+```
+hora_inicio,energia_hora_kwh,potencia_w,tensao_v,corrente_a,energia_total_kwh,tomada,ac_modo,ac_temperatura_c,exterior_c
+2026-10-02T14:00+0100,0.039,39.3,240.8,0.163,0.02,on,off,26,13.7
+```
+
+- `hora_inicio` é o início da hora a que o consumo se refere (14:00 = consumo das 14:00 às 15:00).
+- `energia_hora_kwh` vem do `last_period` do utility meter horário. Os restantes valores são instantâneos, no fim da hora.
+- A energia calculada só conta enquanto o HA está a correr; o `energia_total_kwh` (contador da tomada) é o valor exato acumulado.
+- Se a hora ainda não tem dados (primeira linha depois de instalar), `energia_hora_kwh` pode vir a 0.
+
 ## Como funciona
 
 - Um *template* com `time_pattern` corre nos minutos 0/15/30/45: atualiza as 5
@@ -148,6 +179,7 @@ data,unidade,temperatura,setpoint,modo,ligado,ventilador
 - **Teste mínimo** (isola o problema): acrescentar `teste_shell: 'echo ok > /config/teste.txt'` em
   `shell_command:`, recarregar (`shell_command.reload`), chamar `shell_command.teste_shell` e ver se aparece `teste.txt`.
 - O caminho do ficheiro tem de ser `f=/config/temperaturas.csv` (e não `/temperaturas.csv`, que fica fora da pasta de configuração).
+- **`office_consumos.csv` sem `energia_hora_kwh`:** o `utility_meter` horário só tem `last_period` depois da primeira passagem por uma hora certa. Esperar até à hora seguinte.
 - **Sensores template "unknown" / sem o atributo `amostra`:** o template com trigger nunca correu.
   O trigger inclui o arranque do HA e o evento manual `ac_amostra` (*Ferramentas de programador →
   Eventos → Disparar evento*). Depois de alterar `template:`, usar a ação `template.reload`

@@ -48,7 +48,9 @@ ambiente de **5 ar condicionados Toyotomi** (app EWPE Smart, protocolo Gree) e:
 - regista a temperatura **de 15 em 15 minutos**, durante **pelo menos 2 anos**, para estudos;
 - regista também **setpoint, modo (ligado/desligado e modo), ventilador** e a **temperatura exterior** (Met.no);
 - guarda tudo num **CSV** (`temperaturas.csv`) e no histórico do HA (`recorder`, 800 dias);
-- mostra um **dashboard** com gráfico (zoom) e controlo dos 5 AC.
+- mostra um **dashboard** com gráfico (zoom) e controlo dos 5 AC;
+- **Office**: tomada inteligente (Office UPS) com consumos (potência, energia hora/dia/mês), controlo, painel próprio e
+  **CSV horário** (`office_consumos.csv`).
 
 Não existe código aplicacional: o repositório contém **configuração YAML do Home Assistant**.
 
@@ -56,9 +58,10 @@ Não existe código aplicacional: o repositório contém **configuração YAML d
 
 | Ficheiro | Onde vai no HA | O que faz |
 |---|---|---|
-| `homeassistant/configuration.yaml` | `/homeassistant/configuration.yaml` (= `/config`) | `shell_command` (CSV), sensores template (15 min), `recorder` |
-| `homeassistant/automations.yaml` | acrescentar a `automations.yaml` do HA | automação `Guardar temperaturas CSV` (aos 30 s de cada quarto de hora) |
+| `homeassistant/configuration.yaml` | `/homeassistant/configuration.yaml` (= `/config`) | 2 `shell_command` (CSV), sensores template (AC 15 min; tomada 5 min), `integration` + `utility_meter` (energia do office), `recorder` |
+| `homeassistant/automations.yaml` | acrescentar a `automations.yaml` do HA | `Guardar temperaturas CSV` (aos 30 s de cada quarto de hora) e `Guardar consumos do office CSV` (aos XX:00:30) |
 | `homeassistant/dashboards/ar_condicionado.yaml` | Painéis > novo painel > editor de configuração em bruto | **painel principal**: gráfico apexcharts + 5 cartões dos AC |
+| `homeassistant/dashboards/office.yaml` | idem | painel do **office**: consumos/controlo da tomada + AC do office |
 | `homeassistant/dashboards/ar_condicionado_nativo.yaml` | idem | variante só com cartões nativos (sem apexcharts-card) |
 | `homeassistant/dashboards/resumo_tabela.yaml` | cartão extra | tabela "Resumo" (Unidade, Estado e modo, Ventilador) |
 | `homeassistant/README.md` | | instalação, funcionamento, resolução de problemas |
@@ -74,6 +77,14 @@ Não existe código aplicacional: o repositório contém **configuração YAML d
 | Quarto Crianças | `climate.c64015c4` | `kids_room`: idem |
 
 - Temperatura exterior: `sensor.temperatura_exterior`, lida de `weather.forecast_casa` (Met.no).
+- **Tomada do office ("Office UPS")**: `switch.office_ups_tomada_1`, `switch.office_ups_bloqueio_para_criancas`,
+  `select.office_ups_comportamento_de_arranque`, `select.office_ups_modo_de_luz_indicadora`,
+  `sensor.office_ups_potencia` (W), `_tensao` (V), `_corrente` (A), `_energia_total` (kWh, resolução 0,01).
+  Criados por nós: `sensor.office_tomada_potencia|tensao|corrente` (amostras de 5 min),
+  `sensor.office_energia_calculada` (integração da potência), `sensor.office_energia_hora|dia|mes` (utility meters).
+- CSV do office: `/config/office_consumos.csv` com
+  `hora_inicio,energia_hora_kwh,potencia_w,tensao_v,corrente_a,energia_total_kwh,tomada,ac_modo,ac_temperatura_c,exterior_c`,
+  uma linha por hora fechada.
 - CSV: `/config/temperaturas.csv` com `data,unidade,temperatura,setpoint,modo,ligado,ventilador`,
   uma linha por unidade e uma linha `exterior` por amostra.
 
@@ -83,6 +94,7 @@ Não existe código aplicacional: o repositório contém **configuração YAML d
 2. Acrescentar o conteúdo de `automations.yaml` às automações.
 3. Instalar o `apexcharts-card` à mão (ver README) e criar o painel com `dashboards/ar_condicionado.yaml`.
 4. Executar `shell_command.append_temperaturas_csv` e confirmar o `temperaturas.csv`.
+5. Criar o painel `dashboards/office.yaml` e executar `shell_command.append_office_consumos_csv` para confirmar o `office_consumos.csv`.
 
 ## Antes de commitar
 
@@ -102,6 +114,11 @@ Não existe código aplicacional: o repositório contém **configuração YAML d
 - O Met.no cria `weather.forecast_<nome>` (não `weather.<nome>`).
 - **Não instalar o HACS no Pi 3**: reinicia o Pi (pouca RAM). O `apexcharts-card` instala-se à mão em `/config/www`.
 - O painel usa a vista **Secções**; o gráfico precisa de `section_mode: true` e `grid_options` (`rows` define a altura).
+- **Sensores que atualizam a cada poucos segundos (potência da tomada) não vão para o `recorder`**: enchem o cartão SD.
+  Usar sensores template amostrados (5 min) e pôr esses no `recorder.include`.
+- Energia por hora: o contador da tomada tem resolução de 0,01 kWh; usar `integration` (Riemann, `max_sub_interval`)
+  + `utility_meter`. O CSV horário escreve o `last_period` do utility meter aos XX:00:30 (a hora que acabou).
+- O `recorder.include` é restritivo: **qualquer entidade nova que se queira no histórico/gráficos tem de ser acrescentada lá**.
 - O Pi 3 não deve correr MongoDB; se for preciso uma base de dados, usar uma máquina externa.
 
 ## Idioma e estilo
