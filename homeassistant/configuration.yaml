@@ -46,21 +46,20 @@ shell_command:
   # CSV horário da tomada do office: uma linha por hora, escrita aos XX:00:30 para a hora que ACABOU.
   #   hora_inicio       = início da hora fechada (ex.: 14:00 para o consumo das 14:00 às 15:00)
   #   energia_hora_kwh  = energia consumida nessa hora (last_period do utility_meter)
-  #   potencia_w, tensao_v, corrente_a, energia_total_kwh, tomada, exterior_c
+  #   potencia_w, tensao_v, corrente_a, energia_total_kwh, tomada
   #                     = valores instantâneos no momento da escrita (fim da hora)
   # Campos indisponíveis ficam em branco.
   append_office_consumos_csv: |-
     sh -c '
     f=/config/office_consumos.csv
-    [ -f "$f" ] || echo "hora_inicio,energia_hora_kwh,potencia_w,tensao_v,corrente_a,energia_total_kwh,tomada,exterior_c" > "$f"
+    [ -f "$f" ] || echo "hora_inicio,energia_hora_kwh,potencia_w,tensao_v,corrente_a,energia_total_kwh,tomada" > "$f"
     {% set ini = (now() - timedelta(hours=1)).strftime("%Y-%m-%dT%H:00%z") %}
     {% set eh = state_attr("sensor.office_energia_hora", "last_period") %}
     {% set p = states("sensor.office_ups_potencia") %}
     {% set v = states("sensor.office_ups_tensao") %}
     {% set c = states("sensor.office_ups_corrente") %}
     {% set et = states("sensor.office_ups_energia_total") %}
-    {% set ext = state_attr("weather.forecast_casa", "temperature") %}
-    echo "{{ ini }},{{ eh | round(3) if is_number(eh) else "" }},{{ p if is_number(p) else "" }},{{ v if is_number(v) else "" }},{{ c if is_number(c) else "" }},{{ et if is_number(et) else "" }},{{ states("switch.office_ups_tomada_1") }},{{ ext if is_number(ext) else "" }}" >> "$f"
+    echo "{{ ini }},{{ eh | round(3) if is_number(eh) else "" }},{{ p if is_number(p) else "" }},{{ v if is_number(v) else "" }},{{ c if is_number(c) else "" }},{{ et if is_number(et) else "" }},{{ states("switch.office_ups_tomada_1") }}" >> "$f"
     '
 
 template:

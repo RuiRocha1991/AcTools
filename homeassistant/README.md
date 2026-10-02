@@ -107,12 +107,12 @@ tomada (ligar/desligar, bloqueio para crianças, arranque, luz) e o AC do office
 **CSV horário `/config/office_consumos.csv`** (automação aos XX:00:30, uma linha por hora **fechada**):
 
 ```
-hora_inicio,energia_hora_kwh,potencia_w,tensao_v,corrente_a,energia_total_kwh,tomada,exterior_c
-2026-10-02T14:00+0100,0.039,39.3,240.8,0.163,0.02,on,13.7
+hora_inicio,energia_hora_kwh,potencia_w,tensao_v,corrente_a,energia_total_kwh,tomada
+2026-10-02T14:00+0100,0.039,39.3,240.8,0.163,0.02,on
 ```
 
 - `hora_inicio` é o início da hora a que o consumo se refere (14:00 = consumo das 14:00 às 15:00).
-- `energia_hora_kwh` vem do `last_period` do utility meter horário. Os restantes valores são instantâneos, no fim da hora. O CSV não leva dados dos AC.
+- `energia_hora_kwh` vem do `last_period` do utility meter horário. Os restantes valores são instantâneos, no fim da hora. O CSV só leva dados da tomada (sem AC nem temperatura exterior).
 - A energia calculada só conta enquanto o HA está a correr; o `energia_total_kwh` (contador da tomada) é o valor exato acumulado.
 - Se a hora ainda não tem dados (primeira linha depois de instalar), `energia_hora_kwh` pode vir a 0.
 
