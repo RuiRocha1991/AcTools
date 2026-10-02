@@ -83,8 +83,8 @@ Não existe código aplicacional: o repositório contém **configuração YAML d
   Criados por nós: `sensor.office_tomada_potencia|tensao|corrente` (amostras de 5 min),
   `sensor.office_energia_calculada` (integração da potência), `sensor.office_energia_hora|dia|mes` (utility meters).
 - CSV do office: `/config/office_consumos.csv` com
-  `hora_inicio,energia_hora_kwh,potencia_w,tensao_v,corrente_a,energia_total_kwh,tomada,ac_modo,ac_temperatura_c,exterior_c`,
-  uma linha por hora fechada.
+  `hora_inicio,energia_hora_kwh,potencia_w,tensao_v,corrente_a,energia_total_kwh,tomada,exterior_c`,
+  uma linha por hora fechada. **Sem dados dos AC** (decisão do utilizador).
 - CSV: `/config/temperaturas.csv` com `data,unidade,temperatura,setpoint,modo,ligado,ventilador`,
   uma linha por unidade e uma linha `exterior` por amostra.
 
