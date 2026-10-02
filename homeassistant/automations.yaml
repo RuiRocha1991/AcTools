@@ -11,3 +11,13 @@
       seconds: "30" # depois de os sensores template atualizarem (segundo 0)
   actions:
     - action: shell_command.append_temperaturas_csv
+- id: guardar_office_consumos_csv
+  alias: Guardar consumos do office CSV
+  description: Acrescenta ao /config/office_consumos.csv uma linha por hora (aos XX:00:30, para a hora que acabou)
+  mode: single
+  triggers:
+    - trigger: time_pattern
+      minutes: "0"
+      seconds: "30" # depois de o utility_meter horário reiniciar (XX:00:00)
+  actions:
+    - action: shell_command.append_office_consumos_csv

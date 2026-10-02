@@ -43,6 +43,25 @@ shell_command:
     echo "{{ ts }},exterior,{{ ext if is_number(ext) else "" }},,,," >> "$f"
     '
 
+  # CSV horário da tomada do office: uma linha por hora, escrita aos XX:00:30 para a hora que ACABOU.
+  #   hora_inicio       = início da hora fechada (ex.: 14:00 para o consumo das 14:00 às 15:00)
+  #   energia_hora_kwh  = energia consumida nessa hora (last_period do utility_meter)
+  #   potencia_w, tensao_v, corrente_a, energia_total_kwh, tomada
+  #                     = valores instantâneos no momento da escrita (fim da hora)
+  # Campos indisponíveis ficam em branco.
+  append_office_consumos_csv: |-
+    sh -c '
+    f=/config/office_consumos.csv
+    [ -f "$f" ] || echo "hora_inicio,energia_hora_kwh,potencia_w,tensao_v,corrente_a,energia_total_kwh,tomada" > "$f"
+    {% set ini = (now() - timedelta(hours=1)).strftime("%Y-%m-%dT%H:00%z") %}
+    {% set eh = state_attr("sensor.office_energia_hora", "last_period") %}
+    {% set p = states("sensor.office_ups_potencia") %}
+    {% set v = states("sensor.office_ups_tensao") %}
+    {% set c = states("sensor.office_ups_corrente") %}
+    {% set et = states("sensor.office_ups_energia_total") %}
+    echo "{{ ini }},{{ eh | round(3) if is_number(eh) else "" }},{{ p if is_number(p) else "" }},{{ v if is_number(v) else "" }},{{ c if is_number(c) else "" }},{{ et if is_number(et) else "" }},{{ states("switch.office_ups_tomada_1") }}" >> "$f"
+    '
+
 template:
   - trigger:
       - platform: time_pattern
@@ -234,6 +253,76 @@ template:
         attributes:
           amostra: "{{ now().isoformat() }}"
 
+  # Tomada do office (Office UPS): amostras de 5 em 5 minutos. O sensor original atualiza a cada poucos
+  # segundos e encheria o cartão SD; estes sensores é que ficam no histórico/recorder.
+  - trigger:
+      - platform: time_pattern
+        minutes: "/5"
+      - platform: homeassistant
+        event: start
+      - platform: event
+        event_type: ac_amostra
+    sensor:
+      - name: "Office Tomada Potência"
+        unique_id: office_tomada_potencia
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: "{{ states('sensor.office_ups_potencia') }}"
+        availability: "{{ is_number(states('sensor.office_ups_potencia')) }}"
+        attributes:
+          amostra: "{{ now().isoformat() }}"
+      - name: "Office Tomada Tensão"
+        unique_id: office_tomada_tensao
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        state: "{{ states('sensor.office_ups_tensao') }}"
+        availability: "{{ is_number(states('sensor.office_ups_tensao')) }}"
+        attributes:
+          amostra: "{{ now().isoformat() }}"
+      - name: "Office Tomada Corrente"
+        unique_id: office_tomada_corrente
+        unit_of_measurement: "A"
+        device_class: current
+        state_class: measurement
+        state: "{{ states('sensor.office_ups_corrente') }}"
+        availability: "{{ is_number(states('sensor.office_ups_corrente')) }}"
+        attributes:
+          amostra: "{{ now().isoformat() }}"
+
+# Energia do office calculada por integração da potência (kWh com 3 casas decimais).
+# O contador da tomada (sensor.office_ups_energia_total) só tem resolução de 0,01 kWh, o que é
+# demasiado grosseiro para consumos por hora.
+sensor:
+  - platform: integration
+    source: sensor.office_ups_potencia
+    name: Office Energia Calculada
+    unique_id: office_energia_calculada
+    unit_prefix: k
+    unit_time: h
+    round: 4
+    method: trapezoidal
+    max_sub_interval: "00:05:00"
+
+# Consumo do office por hora, dia e mês (reiniciam no fim de cada período).
+utility_meter:
+  office_energia_hora:
+    name: Office Energia Hora
+    unique_id: office_energia_hora
+    source: sensor.office_energia_calculada
+    cycle: hourly
+  office_energia_dia:
+    name: Office Energia Dia
+    unique_id: office_energia_dia
+    source: sensor.office_energia_calculada
+    cycle: daily
+  office_energia_mes:
+    name: Office Energia Mês
+    unique_id: office_energia_mes
+    source: sensor.office_energia_calculada
+    cycle: monthly
+
 recorder:
   purge_keep_days: 800
   commit_interval: 60
@@ -260,3 +349,12 @@ recorder:
       - sensor.ac_kids_room_modo
       - sensor.ac_kids_room_ventilador
       - sensor.temperatura_exterior
+      - sensor.office_tomada_potencia
+      - sensor.office_tomada_tensao
+      - sensor.office_tomada_corrente
+      - sensor.office_ups_energia_total
+      - sensor.office_energia_calculada
+      - sensor.office_energia_hora
+      - sensor.office_energia_dia
+      - sensor.office_energia_mes
+      - switch.office_ups_tomada_1
